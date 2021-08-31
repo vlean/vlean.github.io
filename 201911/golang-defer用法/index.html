@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vlean.xyz","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="0x00 defer使用测试先来看下面测试中的函数，分别返回什么？ 12345678910111213141516171819202122func Test1() int &amp;#123;	result :&#x3D; 0	defer func() &amp;#123;		result++	&amp;#125;()	return result&amp;#125;func Test2() (result int) &amp;#123;	defe">
+<meta property="og:type" content="article">
+<meta property="og:title" content="golang defer用法">
+<meta property="og:url" content="https://www.vlean.xyz/201911/golang-defer%E7%94%A8%E6%B3%95/index.html">
+<meta property="og:site_name" content="vlean&#39;s blog">
+<meta property="og:description" content="0x00 defer使用测试先来看下面测试中的函数，分别返回什么？ 12345678910111213141516171819202122func Test1() int &amp;#123;	result :&#x3D; 0	defer func() &amp;#123;		result++	&amp;#125;()	return result&amp;#125;func Test2() (result int) &amp;#123;	defe">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://user-images.githubusercontent.com/7309530/67931487-e42d1180-fbfc-11e9-9ad5-78f8f4d97664.png">
+<meta property="article:published_time" content="2019-11-16T08:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-31T08:16:49.260Z">
+<meta property="article:author" content="vlean">
+<meta property="article:tag" content="go defer">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://user-images.githubusercontent.com/7309530/67931487-e42d1180-fbfc-11e9-9ad5-78f8f4d97664.png">
+
+<link rel="canonical" href="https://www.vlean.xyz/201911/golang-defer%E7%94%A8%E6%B3%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>golang defer用法 | vlean's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">vlean's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user-astronaut fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-reader">
+
+    <a href="/read/" rel="section"><i class="fa fa-book-reader fa-fw"></i>读书计划</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vlean.xyz/201911/golang-defer%E7%94%A8%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/imgs/avatar.jpg">
+      <meta itemprop="name" content="vlean">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="vlean's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          golang defer用法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-11-16 16:00:00" itemprop="dateCreated datePublished" datetime="2019-11-16T16:00:00+08:00">2019-11-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-08-31 16:16:49" itemprop="dateModified" datetime="2021-08-31T16:16:49+08:00">2021-08-31</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="0x00-defer使用测试"><a href="#0x00-defer使用测试" class="headerlink" title="0x00 defer使用测试"></a>0x00 defer使用测试</h1><p>先来看下面测试中的函数，分别返回什么？</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Test1</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	result := <span class="number">0</span></span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		result++</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> result</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Test2</span><span class="params">()</span> <span class="params">(result <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		result++</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Test3</span><span class="params">()</span> <span class="params">(result <span class="keyword">int</span>)</span></span>&#123;</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">(result <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">		result++</span><br><span class="line">	&#125;(result)</span><br><span class="line">	result = <span class="number">0</span></span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对slice和map使用defer时，返回值会更具迷惑性，在看下面几个函数之前，先回顾下<code>slice</code>的特性。</p>
+<p>slice的底层是用数组实现的，是对数组一个连续片段的引用，所以slice也是引用类型。如果追加的数组元素超过其容量，则会分配一个新的地址给这个数组。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// slice数据结构定义</span></span><br><span class="line"><span class="keyword">type</span> slice <span class="keyword">struct</span> &#123;</span><br><span class="line">	array unsafe.Pointer</span><br><span class="line">	<span class="built_in">len</span>   <span class="keyword">int</span></span><br><span class="line">	<span class="built_in">cap</span>   <span class="keyword">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="https://user-images.githubusercontent.com/7309530/67931487-e42d1180-fbfc-11e9-9ad5-78f8f4d97664.png" alt="image"></p>
+<p>现在，再看下面几个函数分别返回什么，他们的cap和len分别是多少？</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Slice1</span><span class="params">()</span> []<span class="title">int</span></span> &#123;</span><br><span class="line">	mp := <span class="built_in">make</span>([]<span class="keyword">int</span> , <span class="number">0</span>)</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		mp = <span class="built_in">append</span>(mp, <span class="number">2</span>)</span><br><span class="line">	&#125;()</span><br><span class="line">	mp = <span class="built_in">append</span>(mp, <span class="number">1</span>)</span><br><span class="line">	<span class="keyword">return</span> mp</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Slice2</span><span class="params">()</span> []<span class="title">int</span></span> &#123;</span><br><span class="line">	mp := <span class="built_in">make</span>([]<span class="keyword">int</span> ,<span class="number">0</span>, <span class="number">2</span>)</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		mp = <span class="built_in">append</span>(mp, <span class="number">2</span>)</span><br><span class="line">	&#125;()</span><br><span class="line">	mp = <span class="built_in">append</span>(mp, <span class="number">1</span>)</span><br><span class="line">	<span class="keyword">return</span> mp</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Slice3</span><span class="params">()</span> []<span class="title">int</span></span> &#123;</span><br><span class="line">	mp := <span class="built_in">make</span>([]<span class="keyword">int</span>, <span class="number">0</span>, <span class="number">2</span>)</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">(mp []<span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">		mp = <span class="built_in">append</span>(mp, <span class="number">2</span>)</span><br><span class="line">	&#125;(mp)</span><br><span class="line">	mp = <span class="built_in">append</span>(mp, <span class="number">1</span>)</span><br><span class="line">	<span class="keyword">return</span> mp</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Slice4</span><span class="params">()</span> <span class="params">(mp []<span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	mp = <span class="built_in">make</span>([]<span class="keyword">int</span>, <span class="number">0</span>)</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		mp = <span class="built_in">append</span>(mp, <span class="number">2</span>)</span><br><span class="line">	&#125;()</span><br><span class="line">	mp = <span class="built_in">append</span>(mp, <span class="number">1</span>)</span><br><span class="line">	<span class="keyword">return</span> mp</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Slice5</span><span class="params">()</span> <span class="params">(mp []<span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	mp = <span class="built_in">make</span>([]<span class="keyword">int</span>, <span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		mp = <span class="built_in">append</span>(mp, <span class="number">2</span>)</span><br><span class="line">		mp = <span class="built_in">append</span>(mp, <span class="number">3</span>)</span><br><span class="line">	&#125;()</span><br><span class="line">	mp = <span class="built_in">append</span>(mp, <span class="number">1</span>)</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<hr>
+<p>下面是Test和Slice函数的答案，是否符合你的预期呢。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">test1: 0</span><br><span class="line">test2: 1</span><br><span class="line">test3: 0</span><br><span class="line"></span><br><span class="line">slice1: [1] len: 1 <span class="built_in">cap</span>: 1</span><br><span class="line">slice2: [1] len: 1 <span class="built_in">cap</span>: 2</span><br><span class="line">slice3: [2] len: 1 <span class="built_in">cap</span>: 2</span><br><span class="line">slice4: [1 2] len: 2 <span class="built_in">cap</span>: 2</span><br><span class="line">slice5: [1 2 3] len: 3 <span class="built_in">cap</span>: 4</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="0x01-defer使用规则"><a href="#0x01-defer使用规则" class="headerlink" title="0x01 defer使用规则"></a>0x01 defer使用规则</h1><p>defer是在return之前执行的，而return xxx这一条语句并不是一条原子指令。函数返回的过程是这样的：先给返回值赋值，然后调用defer表达式，最后才是返回到调用函数中。</p>
+<p>因此函数<code>Slice2</code>和<code>Slice5</code>可以被修改为下面的结构，相对的<code>RSlice2</code>和<code>RSlice5</code>的返回内容就更容易看出了。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">RSlice2</span><span class="params">()</span> []<span class="title">int</span></span> &#123;</span><br><span class="line">	mp := <span class="built_in">make</span>([]<span class="keyword">int</span> ,<span class="number">0</span>, <span class="number">2</span>)</span><br><span class="line">	mp = <span class="built_in">append</span>(mp, <span class="number">1</span>)</span><br><span class="line">	ret := mp <span class="comment">// 对返回结果赋值</span></span><br><span class="line">	<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		mp = <span class="built_in">append</span>(mp, <span class="number">2</span>)</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> ret</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">RSlice5</span><span class="params">()</span><span class="params">(mp []<span class="keyword">int</span>)</span></span>  &#123;</span><br><span class="line">	mp = <span class="built_in">make</span>([]<span class="keyword">int</span>, <span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">	mp = <span class="built_in">append</span>(mp, <span class="number">1</span>)</span><br><span class="line">	<span class="comment">// 有名返回值，不会再重新赋值</span></span><br><span class="line">	<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		mp = <span class="built_in">append</span>(mp, <span class="number">2</span>)</span><br><span class="line">		mp = <span class="built_in">append</span>(mp, <span class="number">3</span>)</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> mp</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>defer的使用规则，可以总结如下:</p>
+<ul>
+<li>当defer被声明时，其参数就会被实时解析</li>
+<li>defer执行顺序为先进后出</li>
+<li>defer可以读取有名返回值</li>
+</ul>
+<h1 id="0x02-defer适用场景"><a href="#0x02-defer适用场景" class="headerlink" title="0x02 defer适用场景"></a>0x02 defer适用场景</h1><p>defer可以看做是golang提供的语法糖，以gin框架为例，看下defer的几个常用的场景。</p>
+<h2 id="1-资源回收"><a href="#1-资源回收" class="headerlink" title="1.资源回收"></a>1.资源回收</h2><p>由于defer在函数返回前才执行，因此可以讲资源回收的操作在代码上提前，和资源创建的代码对应起来，以免遗漏。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SaveUploadedFile uploads the form file to specific dst.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Context)</span> <span class="title">SaveUploadedFile</span><span class="params">(file *multipart.FileHeader, dst <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	src, err := file.Open()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> src.Close()</span><br><span class="line"></span><br><span class="line">	out, err := os.Create(dst)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> out.Close()</span><br><span class="line"></span><br><span class="line">	_, err = io.Copy(out, src)</span><br><span class="line">	<span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但是使用defer关闭资源时，如果不注意也很容易留下坑，来看下面一段代码。</p>
+<p>这段代码的问题是如果paths很大，defer会一直不去释放打开的文件资源，导致文件句柄耗尽。<br>改动的办法是讲文件打开和关闭的逻辑抽离到单独的函数中，保证资源及时释放。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestFileOpen</span><span class="params">(paths []<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> _,path := <span class="keyword">range</span> paths&#123;</span><br><span class="line">        file, err := os.Open(path)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="built_in">panic</span>(err)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">defer</span> file.Close()</span><br><span class="line">       <span class="comment">// 业务处理...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="2-捕获panic"><a href="#2-捕获panic" class="headerlink" title="2.捕获panic"></a>2.捕获<code>panic</code></h2><p>golang没有提供常见的try catch功能，而是通过defer和panic来实现类似的异常捕获功能。<br>实际应用中，例如一个http服务器，某个http请求的异常，通常不应挂掉整个http服务，因此gin提供了<code>recover</code>中间件，在出现异常时，记录日志并返回特定的错误信息给前端。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// RecoveryWithWriter returns a middleware for a given writer that recovers from any panics and writes a 500 if there was one.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">RecoveryWithWriter</span><span class="params">(out io.Writer)</span> <span class="title">HandlerFunc</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> logger *log.Logger</span><br><span class="line">	<span class="keyword">if</span> out != <span class="literal">nil</span> &#123;</span><br><span class="line">		logger = log.New(out, <span class="string">&quot;\n\n\x1b[31m&quot;</span>, log.LstdFlags)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="function"><span class="keyword">func</span><span class="params">(c *Context)</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			<span class="keyword">if</span> err := <span class="built_in">recover</span>(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="comment">// 日志记录等...</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;()</span><br><span class="line">		c.Next()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-修改返回值"><a href="#3-修改返回值" class="headerlink" title="3.修改返回值"></a>3.修改返回值</h2><p>这块不再举例，可以参考文档开始的几个示例 :)</p>
+<h1 id="0xFF-参考文档"><a href="#0xFF-参考文档" class="headerlink" title="0xFF 参考文档"></a>0xFF 参考文档</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://studygolang.com/articles/10167">golang中defer的使用规则</a></li>
+<li><a target="_blank" rel="noopener" href="https://tiancaiamao.gitbooks.io/go-internals/content/zh/03.4.html">深入解析go:defer关键字</a></li>
+<li><a target="_blank" rel="noopener" href="https://studygolang.com/articles/5932">go使用defer的几个场景</a></li>
+<li><a target="_blank" rel="noopener" href="https://halfrost.com/go_slice/">深入理解golang slice</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/go-defer/" rel="tag"># go defer</a>
+          </div>
+
+        
+
+
+        
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x00-defer%E4%BD%BF%E7%94%A8%E6%B5%8B%E8%AF%95"><span class="nav-number">1.</span> <span class="nav-text">0x00 defer使用测试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-defer%E4%BD%BF%E7%94%A8%E8%A7%84%E5%88%99"><span class="nav-number">2.</span> <span class="nav-text">0x01 defer使用规则</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-defer%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">3.</span> <span class="nav-text">0x02 defer适用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%B5%84%E6%BA%90%E5%9B%9E%E6%94%B6"><span class="nav-number">3.1.</span> <span class="nav-text">1.资源回收</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%8D%95%E8%8E%B7panic"><span class="nav-number">3.2.</span> <span class="nav-text">2.捕获panic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%BF%AE%E6%94%B9%E8%BF%94%E5%9B%9E%E5%80%BC"><span class="nav-number">3.3.</span> <span class="nav-text">3.修改返回值</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0xFF-%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">4.</span> <span class="nav-text">0xFF 参考文档</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="vlean"
+      src="/imgs/avatar.jpg">
+  <p class="site-author-name" itemprop="name">vlean</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">1</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/vlean" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;vlean" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dolinpa@gmail.com" title="E-Mail → mailto:dolinpa@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">豫ICP备13013580号-2 </a>
+      <img src="/imgs/beian.png" style="display: inline-block;">
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2019 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-dragon"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">vlean</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
