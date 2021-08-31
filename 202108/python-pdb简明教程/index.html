@@ -20,21 +20,23 @@
     var CONFIG = {"hostname":"www.vlean.xyz","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="背景在本地开发时，我们能很方便的借助ide的debug功能对代码进行断点调试，同时也能方便的查看每个变量的值。但是在服务器上调试时，就很难有这么方便的ide可以使用了。常用的做法是在不停的打print，或者启动交互终端。很明显，这种方式的效率不可避免的很低。 这时，python的调试器PDB就派上用场了，它支持在源码行间设置（有条件的）断点和单步执行，检视堆栈帧，列出源码列表，以及在任何堆栈帧的上">
+  <meta name="description" content="0x00 背景在本地开发时，我们能很方便的借助ide的debug功能对代码进行断点调试，同时也能方便的查看每个变量的值。但是在服务器上调试时，就很难有这么方便的ide可以使用了。常用的做法是在不停的打print，或者启动交互终端。很明显，这种方式的效率不可避免的很低。 这时，python的调试器PDB就派上用场了，它支持在源码行间设置（有条件的）断点和单步执行，检视堆栈帧，列出源码列表，以及在任何">
 <meta property="og:type" content="article">
 <meta property="og:title" content="python pdb简明教程">
 <meta property="og:url" content="https://www.vlean.xyz/202108/python-pdb%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/index.html">
 <meta property="og:site_name" content="vlean&#39;s blog">
-<meta property="og:description" content="背景在本地开发时，我们能很方便的借助ide的debug功能对代码进行断点调试，同时也能方便的查看每个变量的值。但是在服务器上调试时，就很难有这么方便的ide可以使用了。常用的做法是在不停的打print，或者启动交互终端。很明显，这种方式的效率不可避免的很低。 这时，python的调试器PDB就派上用场了，它支持在源码行间设置（有条件的）断点和单步执行，检视堆栈帧，列出源码列表，以及在任何堆栈帧的上">
+<meta property="og:description" content="0x00 背景在本地开发时，我们能很方便的借助ide的debug功能对代码进行断点调试，同时也能方便的查看每个变量的值。但是在服务器上调试时，就很难有这么方便的ide可以使用了。常用的做法是在不停的打print，或者启动交互终端。很明显，这种方式的效率不可避免的很低。 这时，python的调试器PDB就派上用场了，它支持在源码行间设置（有条件的）断点和单步执行，检视堆栈帧，列出源码列表，以及在任何">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/190170/1630046220922-6a87068b-67f8-4b43-a37b-28affa536504.png#clientId=uf4632dfd-2353-4&from=paste&height=340&id=u19ff74e9&margin=%5Bobject%20Object%5D&name=image.png&originHeight=538&originWidth=973&originalType=binary&ratio=1&size=65578&status=done&style=none&taskId=u44d9b86a-f5fc-482f-a3c6-35ed9cf57c4&width=614.5">
 <meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/190170/1629981997362-8f2c20ff-c818-436a-a2bb-73eb2b69fbc6.png#clientId=uf4632dfd-2353-4&from=paste&height=120&id=u9c086834&margin=%5Bobject%20Object%5D&name=image.png&originHeight=175&originWidth=251&originalType=binary&ratio=1&size=9848&status=done&style=none&taskId=u4ff0f73a-9414-4726-a833-77eb353359d&width=171.5">
 <meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/190170/1630042828634-ad191084-167b-4a9e-abfc-82b2a6559eb8.png#clientId=uf4632dfd-2353-4&from=paste&height=193&id=u7931332f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=385&originWidth=405&originalType=binary&ratio=1&size=31115&status=done&style=none&taskId=ue6d4a93b-01f4-490e-adcc-9d51e043635&width=202.5">
 <meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/190170/1630045142276-02abae98-f31c-459b-894f-5cbf2e0b67ab.png#clientId=uf4632dfd-2353-4&from=paste&height=123&id=u9ddca8db&margin=%5Bobject%20Object%5D&name=image.png&originHeight=245&originWidth=364&originalType=binary&ratio=1&size=19885&status=done&style=none&taskId=u0326825a-4e45-4224-926b-2f1938bc9d8&width=182">
 <meta property="article:published_time" content="2021-08-31T08:33:03.000Z">
-<meta property="article:modified_time" content="2021-08-31T10:18:44.804Z">
+<meta property="article:modified_time" content="2021-08-31T10:56:48.468Z">
 <meta property="article:author" content="vlean">
-<meta property="article:tag" content="pdb,python">
+<meta property="article:tag" content="pdb">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="教程">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/190170/1630046220922-6a87068b-67f8-4b43-a37b-28affa536504.png#clientId=uf4632dfd-2353-4&from=paste&height=340&id=u19ff74e9&margin=%5Bobject%20Object%5D&name=image.png&originHeight=538&originWidth=973&originalType=binary&ratio=1&size=65578&status=done&style=none&taskId=u44d9b86a-f5fc-482f-a3c6-35ed9cf57c4&width=614.5">
 
@@ -190,7 +192,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-08-31 16:33:03 / 修改时间：18:18:44" itemprop="dateCreated datePublished" datetime="2021-08-31T16:33:03+08:00">2021-08-31</time>
+              <time title="创建时间：2021-08-31 16:33:03 / 修改时间：18:56:48" itemprop="dateCreated datePublished" datetime="2021-08-31T16:33:03+08:00">2021-08-31</time>
             </span>
 
           
@@ -204,9 +206,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>在本地开发时，我们能很方便的借助ide的debug功能对代码进行断点调试，同时也能方便的查看每个变量的值。但是在服务器上调试时，就很难有这么方便的ide可以使用了。常用的做法是在不停的打print，或者启动交互终端。很明显，这种方式的效率不可避免的很低。</p>
+        <h1 id="0x00-背景"><a href="#0x00-背景" class="headerlink" title="0x00 背景"></a>0x00 背景</h1><p>在本地开发时，我们能很方便的借助ide的debug功能对代码进行断点调试，同时也能方便的查看每个变量的值。但是在服务器上调试时，就很难有这么方便的ide可以使用了。常用的做法是在不停的打print，或者启动交互终端。很明显，这种方式的效率不可避免的很低。</p>
 <p>这时，python的调试器PDB就派上用场了，它支持在源码行间设置（有条件的）断点和单步执行，检视堆栈帧，列出源码列表，以及在任何堆栈帧的上下文中运行任意 Python 代码。同时还支持事后调试，可以在程序控制下调用。有了这样的神器，我们就能在服务器上断点调试代码了，下面让我们来看一下怎么使用PDB。</p>
-<h1 id="使用方式"><a href="#使用方式" class="headerlink" title="使用方式"></a>使用方式</h1><p>有两种方式可以进入到调试模式</p>
+<h1 id="0x01-使用方式"><a href="#0x01-使用方式" class="headerlink" title="0x01 使用方式"></a>0x01 使用方式</h1><p>有两种方式可以进入到调试模式</p>
 <ol>
 <li>无代码侵入，在执行开始时，就启动pdb<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python -m pdb script.py</span><br></pre></td></tr></table></figure>
 例如有个脚本文件为script.py<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">power</span>(<span class="params">a</span>):</span></span><br><span class="line">  <span class="keyword">return</span> a*a</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">   b = power(<span class="number">10</span>)</span><br><span class="line">   <span class="built_in">print</span>(b)</span><br></pre></td></tr></table></figure>
@@ -219,7 +221,7 @@
 
 
 <p>如果你想要使用ipython一样，也有一个叫ipdb的扩展，他的使用界面和ipython类似，也提供了很多优化。但是需要额外安装依赖，不像pdb是python自带的组件。具体使用可以看下面的截图：<br><img src="https://cdn.nlark.com/yuque/0/2021/png/190170/1630046220922-6a87068b-67f8-4b43-a37b-28affa536504.png#clientId=uf4632dfd-2353-4&from=paste&height=340&id=u19ff74e9&margin=%5Bobject%20Object%5D&name=image.png&originHeight=538&originWidth=973&originalType=binary&ratio=1&size=65578&status=done&style=none&taskId=u44d9b86a-f5fc-482f-a3c6-35ed9cf57c4&width=614.5" alt="image.png"></p>
-<h1 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h1><p>在pdb交互界面，按h能看到全部的命令，如下：</p>
+<h1 id="0x02-常用命令"><a href="#0x02-常用命令" class="headerlink" title="0x02 常用命令"></a>0x02 常用命令</h1><p>在pdb交互界面，按h能看到全部的命令，如下：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">(Pdb) h</span><br><span class="line"></span><br><span class="line">Documented commands (<span class="built_in">type</span> <span class="built_in">help</span> &lt;topic&gt;):</span><br><span class="line">========================================</span><br><span class="line">EOF    c          d        h         <span class="built_in">list</span>      q        rv       undisplay</span><br><span class="line">a      cl         debug    <span class="built_in">help</span>      ll        quit     s        unt</span><br><span class="line">alias  clear      disable  ignore    longlist  r        source   until</span><br><span class="line">args   commands   display  interact  n         restart  step     up</span><br><span class="line">b      condition  down     j         <span class="built_in">next</span>      <span class="keyword">return</span>   tbreak   w</span><br><span class="line"><span class="keyword">break</span>  cont       enable   jump      p         retval   u        whatis</span><br><span class="line">bt     <span class="keyword">continue</span>   exit     l         pp        run      unalias  where</span><br><span class="line"></span><br><span class="line">Miscellaneous <span class="built_in">help</span> topics:</span><br><span class="line">==========================</span><br><span class="line"><span class="built_in">exec</span>  pdb</span><br></pre></td></tr></table></figure>
 
 <p>常用的主要是设置断点，查看源代码，顺序控制，进入交互模式等</p>
@@ -323,7 +325,7 @@
 <td></td>
 </tr>
 </tbody></table>
-<h1 id="进阶使用"><a href="#进阶使用" class="headerlink" title="进阶使用"></a>进阶使用</h1><h2 id="1-别名"><a href="#1-别名" class="headerlink" title="1.别名"></a>1.别名</h2><p>创建一个标识为 name 的别名来执行 command。 执行的命令不可加上引号。<br>可替换形参可通过 %1, %2 等来标示，而 %* 会被所有形参所替换。别名允许嵌套并可包含能在 pdb 提示符下合法输入的任何内容。别名会递归地应用到命令行的第一个单词；行内的其他单词不会受影响。</p>
+<h1 id="0x03-进阶使用"><a href="#0x03-进阶使用" class="headerlink" title="0x03 进阶使用"></a>0x03 进阶使用</h1><h2 id="1-别名"><a href="#1-别名" class="headerlink" title="1.别名"></a>1.别名</h2><p>创建一个标识为 name 的别名来执行 command。 执行的命令不可加上引号。<br>可替换形参可通过 %1, %2 等来标示，而 %* 会被所有形参所替换。别名允许嵌套并可包含能在 pdb 提示符下合法输入的任何内容。别名会递归地应用到命令行的第一个单词；行内的其他单词不会受影响。</p>
 <p>摘抄个官方的示例：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 打印对象属性</span></span><br><span class="line">alias pi <span class="keyword">for</span> k <span class="keyword">in</span> %<span class="number">1.</span>__dict__.keys(): <span class="built_in">print</span>(<span class="string">&quot;%1.&quot;</span>,k,<span class="string">&quot;=&quot;</span>,%<span class="number">1.</span>__dict__[k])</span><br></pre></td></tr></table></figure>
 <p>这里有个示例，让我们一起看下：</p>
@@ -348,7 +350,7 @@
 <p>执行连接，之后就可以在本地进行代码调试了</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ telnet <span class="number">0.0</span><span class="number">.0</span><span class="number">.0</span> <span class="number">9527</span></span><br><span class="line">Trying <span class="number">0.0</span><span class="number">.0</span><span class="number">.0</span>...</span><br><span class="line">Connected to <span class="number">0.0</span><span class="number">.0</span><span class="number">.0</span>.</span><br><span class="line">Escape character <span class="keyword">is</span> <span class="string">&#x27;^]&#x27;</span>.</span><br><span class="line">Breakpoint <span class="number">1</span> at /Users/vlean/worker/py/oa/task.py:<span class="number">10</span></span><br><span class="line">Breakpoint <span class="number">2</span> at /Users/vlean/worker/py/oa/task.py:<span class="number">5</span></span><br><span class="line">&gt; /Users/vlean/worker/py/oa/task.py(<span class="number">6</span>)cube()</span><br><span class="line">-&gt; <span class="keyword">return</span> a*a*a</span><br><span class="line">(Pdb)</span><br></pre></td></tr></table></figure>
 
-<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><p><a target="_blank" rel="noopener" href="https://docs.python.org/zh-cn/3/library/pdb.html#pdbcommand-list">https://docs.python.org/zh-cn/3/library/pdb.html#pdbcommand-list</a><br><a target="_blank" rel="noopener" href="https://pypi.org/project/ipdb/">https://pypi.org/project/ipdb/</a><br><a target="_blank" rel="noopener" href="https://pypi.org/project/pdbpp/">https://pypi.org/project/pdbpp/</a><br><a target="_blank" rel="noopener" href="https://pypi.org/project/remote-pdb/">https://pypi.org/project/remote-pdb/</a><br><a target="_blank" rel="noopener" href="https://xmfbit.github.io/2017/08/21/debugging-with-ipdb/">https://xmfbit.github.io/2017/08/21/debugging-with-ipdb/</a></p>
+<h1 id="0xff-参考文档"><a href="#0xff-参考文档" class="headerlink" title="0xff 参考文档"></a>0xff 参考文档</h1><p><a target="_blank" rel="noopener" href="https://docs.python.org/zh-cn/3/library/pdb.html#pdbcommand-list">https://docs.python.org/zh-cn/3/library/pdb.html#pdbcommand-list</a><br><a target="_blank" rel="noopener" href="https://pypi.org/project/ipdb/">https://pypi.org/project/ipdb/</a><br><a target="_blank" rel="noopener" href="https://pypi.org/project/pdbpp/">https://pypi.org/project/pdbpp/</a><br><a target="_blank" rel="noopener" href="https://pypi.org/project/remote-pdb/">https://pypi.org/project/remote-pdb/</a><br><a target="_blank" rel="noopener" href="https://xmfbit.github.io/2017/08/21/debugging-with-ipdb/">https://xmfbit.github.io/2017/08/21/debugging-with-ipdb/</a></p>
 
     </div>
 
@@ -358,7 +360,9 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/pdb-python/" rel="tag"># pdb,python</a>
+              <a href="/tags/pdb/" rel="tag"># pdb</a>
+              <a href="/tags/python/" rel="tag"># python</a>
+              <a href="/tags/%E6%95%99%E7%A8%8B/" rel="tag"># 教程</a>
           </div>
 
         
@@ -430,7 +434,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F"><span class="nav-number">2.</span> <span class="nav-text">使用方式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="nav-number">3.</span> <span class="nav-text">常用命令</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%9B%E9%98%B6%E4%BD%BF%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">进阶使用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%88%AB%E5%90%8D"><span class="nav-number">4.1.</span> <span class="nav-text">1.别名</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-pdbrc-%E6%96%87%E4%BB%B6"><span class="nav-number">4.2.</span> <span class="nav-text">2._.pdbrc_文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%BA%8B%E5%90%8E%E8%B0%83%E8%AF%95"><span class="nav-number">4.3.</span> <span class="nav-text">3.事后调试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E8%BF%9C%E7%A8%8B%E8%B0%83%E8%AF%95"><span class="nav-number">4.4.</span> <span class="nav-text">4.远程调试</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">5.</span> <span class="nav-text">参考文档</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x00-%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">0x00 背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F"><span class="nav-number">2.</span> <span class="nav-text">0x01 使用方式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="nav-number">3.</span> <span class="nav-text">0x02 常用命令</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-%E8%BF%9B%E9%98%B6%E4%BD%BF%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">0x03 进阶使用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%88%AB%E5%90%8D"><span class="nav-number">4.1.</span> <span class="nav-text">1.别名</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-pdbrc-%E6%96%87%E4%BB%B6"><span class="nav-number">4.2.</span> <span class="nav-text">2._.pdbrc_文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%BA%8B%E5%90%8E%E8%B0%83%E8%AF%95"><span class="nav-number">4.3.</span> <span class="nav-text">3.事后调试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E8%BF%9C%E7%A8%8B%E8%B0%83%E8%AF%95"><span class="nav-number">4.4.</span> <span class="nav-text">4.远程调试</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0xff-%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">5.</span> <span class="nav-text">0xff 参考文档</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -451,7 +455,7 @@
         </a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -542,6 +546,8 @@
 
 
 
+
+  
 
   
 
