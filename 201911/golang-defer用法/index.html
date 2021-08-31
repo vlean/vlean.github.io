@@ -17,7 +17,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"www.vlean.xyz","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"www.vlean.xyz","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
   <meta name="description" content="0x00 defer使用测试先来看下面测试中的函数，分别返回什么？ 12345678910111213141516171819202122func Test1() int &amp;#123;	result :&#x3D; 0	defer func() &amp;#123;		result++	&amp;#125;()	return result&amp;#125;func Test2() (result int) &amp;#123;	defe">
@@ -29,7 +29,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://user-images.githubusercontent.com/7309530/67931487-e42d1180-fbfc-11e9-9ad5-78f8f4d97664.png">
 <meta property="article:published_time" content="2019-11-16T08:00:00.000Z">
-<meta property="article:modified_time" content="2021-08-31T10:56:48.468Z">
+<meta property="article:modified_time" content="2021-08-31T14:11:40.933Z">
 <meta property="article:author" content="vlean">
 <meta property="article:tag" content="golang">
 <meta name="twitter:card" content="summary">
@@ -122,7 +122,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">2</span></a>
 
   </li>
         <li class="menu-item menu-item-about">
@@ -132,7 +132,7 @@
   </li>
         <li class="menu-item menu-item-reader">
 
-    <a href="/read/" rel="section"><i class="fa fa-book-reader fa-fw"></i>读书计划</a>
+    <a href="/reader/" rel="section"><i class="fa fa-book-reader fa-fw"></i>读书计划</a>
 
   </li>
   </ul>
@@ -193,7 +193,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-08-31 18:56:48" itemprop="dateModified" datetime="2021-08-31T18:56:48+08:00">2021-08-31</time>
+                <time title="修改时间：2021-08-31 22:11:40" itemprop="dateModified" datetime="2021-08-31T22:11:40+08:00">2021-08-31</time>
               </span>
 
           
@@ -211,6 +211,8 @@
 <figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Test1</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	result := <span class="number">0</span></span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		result++</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> result</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Test2</span><span class="params">()</span> <span class="params">(result <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		result++</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Test3</span><span class="params">()</span> <span class="params">(result <span class="keyword">int</span>)</span></span>&#123;</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">(result <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">		result++</span><br><span class="line">	&#125;(result)</span><br><span class="line">	result = <span class="number">0</span></span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>对slice和map使用defer时，返回值会更具迷惑性，在看下面几个函数之前，先回顾下<code>slice</code>的特性。</p>
+<span id="more"></span>
+
 <p>slice的底层是用数组实现的，是对数组一个连续片段的引用，所以slice也是引用类型。如果追加的数组元素超过其容量，则会分配一个新的地址给这个数组。</p>
 <figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// slice数据结构定义</span></span><br><span class="line"><span class="keyword">type</span> slice <span class="keyword">struct</span> &#123;</span><br><span class="line">	array unsafe.Pointer</span><br><span class="line">	<span class="built_in">len</span>   <span class="keyword">int</span></span><br><span class="line">	<span class="built_in">cap</span>   <span class="keyword">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><img src="https://user-images.githubusercontent.com/7309530/67931487-e42d1180-fbfc-11e9-9ad5-78f8f4d97664.png" alt="image"></p>
@@ -334,7 +336,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x00-defer%E4%BD%BF%E7%94%A8%E6%B5%8B%E8%AF%95"><span class="nav-number">1.</span> <span class="nav-text">0x00 defer使用测试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-defer%E4%BD%BF%E7%94%A8%E8%A7%84%E5%88%99"><span class="nav-number">2.</span> <span class="nav-text">0x01 defer使用规则</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-defer%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">3.</span> <span class="nav-text">0x02 defer适用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%B5%84%E6%BA%90%E5%9B%9E%E6%94%B6"><span class="nav-number">3.1.</span> <span class="nav-text">1.资源回收</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%8D%95%E8%8E%B7panic"><span class="nav-number">3.2.</span> <span class="nav-text">2.捕获panic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%BF%AE%E6%94%B9%E8%BF%94%E5%9B%9E%E5%80%BC"><span class="nav-number">3.3.</span> <span class="nav-text">3.修改返回值</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0xFF-%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">4.</span> <span class="nav-text">0xFF 参考文档</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x00-defer%E4%BD%BF%E7%94%A8%E6%B5%8B%E8%AF%95"><span class="nav-text">0x00 defer使用测试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-defer%E4%BD%BF%E7%94%A8%E8%A7%84%E5%88%99"><span class="nav-text">0x01 defer使用规则</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-defer%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-text">0x02 defer适用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%B5%84%E6%BA%90%E5%9B%9E%E6%94%B6"><span class="nav-text">1.资源回收</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%8D%95%E8%8E%B7panic"><span class="nav-text">2.捕获panic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%BF%AE%E6%94%B9%E8%BF%94%E5%9B%9E%E5%80%BC"><span class="nav-text">3.修改返回值</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0xFF-%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-text">0xFF 参考文档</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -392,7 +394,7 @@
 
 <div class="copyright">
   
-  &copy; 2019 – 
+  &copy; 2016 – 
   <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-dragon"></i>
