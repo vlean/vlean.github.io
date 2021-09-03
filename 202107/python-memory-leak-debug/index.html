@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vlean.xyz","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="0x00 背景内存泄漏是程序常见的错误行为之一，在uwsgi或者gunicorn里可以配置max-requests参数，来决定执行多少次请求后，重启worker来对抗内存泄漏问题，此外语言还有gc机制，在一般情况都不需要考虑内存泄漏问题。但是不正确的程序写法，在某些场景下会导致内存飙升，内存使用率居高不下，甚至OOM。因此内存泄漏问题需要引起我们的重视，在出现内存泄漏问题时，及时定位和解决。 那怎">
+<meta property="og:type" content="article">
+<meta property="og:title" content="python内存泄漏排查指北">
+<meta property="og:url" content="https://www.vlean.xyz/202107/python-memory-leak-debug/index.html">
+<meta property="og:site_name" content="vlean&#39;s blog">
+<meta property="og:description" content="0x00 背景内存泄漏是程序常见的错误行为之一，在uwsgi或者gunicorn里可以配置max-requests参数，来决定执行多少次请求后，重启worker来对抗内存泄漏问题，此外语言还有gc机制，在一般情况都不需要考虑内存泄漏问题。但是不正确的程序写法，在某些场景下会导致内存飙升，内存使用率居高不下，甚至OOM。因此内存泄漏问题需要引起我们的重视，在出现内存泄漏问题时，及时定位和解决。 那怎">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/190170/1627624091323-363a54b2-db18-4364-98ff-b7b08cba818e.png#clientId=u4fc9c4ae-017a-4&from=paste&height=687&id=u4bd0e0f4&margin=%5Bobject%20Object%5D&name=image.png&originHeight=687&originWidth=1975&originalType=binary&ratio=1&size=112522&status=done&style=none&taskId=u5a68f598-7f85-447a-9989-7b2da9b6e4b&width=1975">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/190170/1627629803319-02d13604-843b-4576-9ea6-e67a4ff83b50.png#clientId=u4fc9c4ae-017a-4&from=paste&height=1030&id=ua3413d52&margin=%5Bobject%20Object%5D&name=image.png&originHeight=1030&originWidth=2222&originalType=binary&ratio=1&size=510157&status=done&style=none&taskId=ua3b2bf59-32e9-48f0-a814-a95f4eda249&width=2222">
+<meta property="article:published_time" content="2021-07-27T08:18:12.000Z">
+<meta property="article:modified_time" content="2021-09-03T08:30:54.433Z">
+<meta property="article:author" content="vlean">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="内存泄漏">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/190170/1627624091323-363a54b2-db18-4364-98ff-b7b08cba818e.png#clientId=u4fc9c4ae-017a-4&from=paste&height=687&id=u4bd0e0f4&margin=%5Bobject%20Object%5D&name=image.png&originHeight=687&originWidth=1975&originalType=binary&ratio=1&size=112522&status=done&style=none&taskId=u5a68f598-7f85-447a-9989-7b2da9b6e4b&width=1975">
+
+<link rel="canonical" href="https://www.vlean.xyz/202107/python-memory-leak-debug/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>python内存泄漏排查指北 | vlean's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">vlean's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">3</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user-astronaut fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-reader">
+
+    <a href="/reader/" rel="section"><i class="fa fa-book-reader fa-fw"></i>读书计划</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vlean.xyz/202107/python-memory-leak-debug/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/imgs/avatar.jpg">
+      <meta itemprop="name" content="vlean">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="vlean's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          python内存泄漏排查指北
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-07-27 16:18:12" itemprop="dateCreated datePublished" datetime="2021-07-27T16:18:12+08:00">2021-07-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-09-03 16:30:54" itemprop="dateModified" datetime="2021-09-03T16:30:54+08:00">2021-09-03</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="0x00-背景"><a href="#0x00-背景" class="headerlink" title="0x00 背景"></a>0x00 背景</h1><p>内存泄漏是程序常见的错误行为之一，在uwsgi或者gunicorn里可以配置max-requests参数，来决定执行多少次请求后，重启worker来对抗内存泄漏问题，此外语言还有gc机制，在一般情况都不需要考虑内存泄漏问题。<br>但是不正确的程序写法，在某些场景下会导致内存飙升，内存使用率居高不下，甚至OOM。因此内存泄漏问题需要引起我们的重视，在出现内存泄漏问题时，及时定位和解决。</p>
+<p>那怎么确定一个程序是发生了内存泄漏，而不是正常的程序内存申请占用呢？<br>在有监控的场景下如grafana、zabbix时，可以参看对应机器的内存使用情况，在相对较长的时间内，是否存在内存持续增长的情况。如下图，内存在缓慢持续上涨，说明极有可能发生了内存泄漏问题。<br><img src="https://cdn.nlark.com/yuque/0/2021/png/190170/1627624091323-363a54b2-db18-4364-98ff-b7b08cba818e.png#clientId=u4fc9c4ae-017a-4&from=paste&height=687&id=u4bd0e0f4&margin=%5Bobject%20Object%5D&name=image.png&originHeight=687&originWidth=1975&originalType=binary&ratio=1&size=112522&status=done&style=none&taskId=u5a68f598-7f85-447a-9989-7b2da9b6e4b&width=1975" alt="image.png"></p>
+<h1 id="0x01-排查工具"><a href="#0x01-排查工具" class="headerlink" title="0x01 排查工具"></a>0x01 排查工具</h1><p>确定了内存泄漏问题后，就需要进一步排查到底是什么问题引起的内存泄漏了。朴素的排查思路是，观察内存上升时，被调用的服务。例如某个接口被调用后，内存增加，在接口调用结束一段时间后内存仍未释放(需要结合gc来看)，则该接口发生内存泄漏的概率极大。除了定性分析，python还有不少定量分析的工具，来辅助我们定位内存泄漏问题，主要有以下三类：</p>
+<ul>
+<li>调试工具的gdb、pdb</li>
+<li>查看内置对象数量和占用空间的objgraph、guppy、pympler</li>
+<li>逐行/文件统计内存申请占用量的memory_profiler、tracemalloc</li>
+</ul>
+<span id="more"></span>
+
+<h2 id="1-gdb、pdb"><a href="#1-gdb、pdb" class="headerlink" title="1. gdb、pdb"></a>1. gdb、pdb</h2><p><a target="_blank" rel="noopener" href="https://docs.python.org/zh-cn/3/library/pdb.html#module-pdb">pdb</a> 模块定义了一个交互式源代码调试器，用于 Python 程序。它支持在源码行间设置（有条件的）断点和单步执行，检视堆栈帧，列出源码列表，以及在任何堆栈帧的上下文中运行任意 Python 代码。它还支持事后调试，可以在程序控制下调用。<br>gdb大家都了解不再介绍了，gdb 7+以后支持python程序。下面演示下使用gdb保存python内存堆栈。</p>
+<p>1.使用gdb监听python程序</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ gdb -p <span class="number">1131</span></span><br><span class="line">GNU gdb (GDB) Red Hat Enterprise Linux <span class="number">7.6</span><span class="number">.1</span>-<span class="number">94.</span>el7</span><br><span class="line">Copyright (C) <span class="number">2013</span> Free Software Foundation, Inc.</span><br><span class="line">...</span><br><span class="line">Attaching to process <span class="number">1131</span></span><br><span class="line">...</span><br><span class="line">(gdb)</span><br></pre></td></tr></table></figure>
+<p>2.获取进程的内存范围</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) ! grep heap /proc/<span class="number">1131</span>/maps</span><br><span class="line">00c7d000-00d94000 rw-p <span class="number">00000000</span> <span class="number">00</span>:<span class="number">00</span> <span class="number">0</span>         [heap]</span><br></pre></td></tr></table></figure>
+<p>3.将内存堆栈保存到文件里</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) dump binary memory /tmp/python-heap.<span class="built_in">bin</span> <span class="number">0x00c7d000</span> <span class="number">0x00d94000</span></span><br></pre></td></tr></table></figure>
+<p>之后就可以使用xxd等工具建站内存堆栈信息了，也有strings这样的用于打印堆栈中所有的字符串的工具。<br>借助这些工具我们可以查看哪些数据占用的内存过大，但是python的内存堆栈分析工具远不如java的强大好用，因此常常还要借助下面的分析工具。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">xxd python-heap.<span class="built_in">bin</span></span><br><span class="line"><span class="number">0000000</span>: 0102 0304 <span class="number">5374</span> <span class="number">7269</span> <span class="number">6e67</span> <span class="number">2044</span> <span class="number">6174</span> 61aa  ....String Data.</span><br><span class="line">0000010: bbcc <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span>  ................</span><br><span class="line">0000020: <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span>  ................</span><br><span class="line">0000030: <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span>  ................</span><br><span class="line">0000040: <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span>  ................</span><br><span class="line">0000050: <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span>  ................</span><br><span class="line">0000060: <span class="number">0000</span> <span class="number">0000</span>                                ....</span><br></pre></td></tr></table></figure>
+<h2 id="2-objgraph、guppy"><a href="#2-objgraph、guppy" class="headerlink" title="2. objgraph、guppy"></a>2. objgraph、guppy</h2><p>objgraph除了绘制内存对象关系外，提供了两个函数用于统计python对象的数量和对象的增长量，例如:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> gc</span><br><span class="line">gc.collect()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> objgraph</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>objgraph.show_most_common_types()</span><br><span class="line">function          <span class="number">41369</span></span><br><span class="line"><span class="built_in">dict</span>              <span class="number">35348</span></span><br><span class="line"><span class="built_in">tuple</span>             <span class="number">29144</span></span><br><span class="line"><span class="built_in">list</span>              <span class="number">19314</span></span><br><span class="line">weakref           <span class="number">9980</span></span><br><span class="line">cell              <span class="number">8595</span></span><br><span class="line"><span class="built_in">type</span>              <span class="number">6282</span></span><br><span class="line">getset_descriptor <span class="number">4826</span></span><br><span class="line"><span class="built_in">set</span>               <span class="number">3707</span></span><br><span class="line">DeferredAttribute <span class="number">3150</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>u2 = User.objects.first() <span class="comment">#业务代码</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>objgraph.show_growth()</span><br><span class="line"><span class="built_in">dict</span>              <span class="number">35425</span>        +<span class="number">4</span></span><br><span class="line"><span class="built_in">list</span>              <span class="number">19328</span>        +<span class="number">2</span></span><br><span class="line">User                  <span class="number">2</span>        +<span class="number">1</span></span><br><span class="line">AnnotatedValue        <span class="number">2</span>        +<span class="number">1</span></span><br><span class="line">ModelState            <span class="number">2</span>        +<span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>guppy和objgraph在内存分析方面的使用差不多，主要看python内置对象的数量，唯一不同的是，能显示每种类型占用的内存总量，例如:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> user.models <span class="keyword">import</span> *</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> guppy <span class="keyword">import</span> hpy</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>hp = hpy()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>before = hp.heap()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>u = User.objects.first() <span class="comment">#业务代码</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>after = hp.heap()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>mem = after - before</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>mem</span><br><span class="line">Partition of a <span class="built_in">set</span> of <span class="number">2035</span> objects. Total size = <span class="number">250202</span> <span class="built_in">bytes</span>.</span><br><span class="line"> Index  Count   %     Size   % Cumulative  % Kind (<span class="class"><span class="keyword">class</span> / <span class="title">dict</span> <span class="title">of</span> <span class="title">class</span>)</span></span><br><span class="line"><span class="class">     0    519  26    56304  23     56304  23 <span class="title">str</span></span></span><br><span class="line"><span class="class">     1    637  31    51640  21    107944  43 <span class="title">tuple</span></span></span><br><span class="line"><span class="class">     2    288  14    26946  11    134890  54 <span class="title">bytes</span></span></span><br><span class="line"><span class="class">     3     21   1    23120   9    158010  63 <span class="title">type</span></span></span><br><span class="line"><span class="class">     4    141   7    20576   8    178586  71 <span class="title">types</span>.<span class="title">CodeType</span></span></span><br><span class="line"><span class="class">     5     68   3    19712   8    198298  79 <span class="title">dict</span> (<span class="params">no owner</span>)</span></span><br><span class="line"><span class="class">     6     89   4    12104   5    210402  84 <span class="title">function</span></span></span><br><span class="line"><span class="class">     7     21   1     9328   4    219730  88 <span class="title">dict</span> <span class="title">of</span> <span class="title">type</span></span></span><br><span class="line"><span class="class">     8      5   0     5944   2    225674  90 <span class="title">dict</span> <span class="title">of</span> <span class="title">module</span></span></span><br><span class="line"><span class="class">     9     43   2     4816   2    230490  92 <span class="title">dict</span> <span class="title">of</span> <span class="title">django</span>.<span class="title">db</span>.<span class="title">models</span>.<span class="title">expressions</span>.<span class="title">Col</span></span></span><br><span class="line"><span class="class">&lt;34 <span class="title">more</span> <span class="title">rows</span>. <span class="title">Type</span> <span class="title">e</span>.<span class="title">g</span>. &#x27;<span class="title">_</span>.<span class="title">more</span>&#x27; <span class="title">to</span> <span class="title">view</span>.&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+
+
+<h2 id="3-memory-profiler、tracemalloc"><a href="#3-memory-profiler、tracemalloc" class="headerlink" title="3. memory_profiler、tracemalloc"></a>3. memory_profiler、tracemalloc</h2><p>objgraph、guppy只能分析有哪些数据类型，而且python内置的数据类型，和他们分别占用的内存量。想要具体分析每行代码的内存占用，还得依赖这两个工具memory_profiler和tracemalloc。<br>memory_profiler提供了 @profiler 装饰器，能针对具体的函数调用过程，记录每行的内存使用情况，例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@profile</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">my_func</span>():</span></span><br><span class="line">    a = [<span class="number">1</span>] * (<span class="number">10</span> ** <span class="number">6</span>)</span><br><span class="line">    b = [<span class="number">2</span>] * (<span class="number">2</span> * <span class="number">10</span> ** <span class="number">7</span>)</span><br><span class="line">    <span class="keyword">del</span> b</span><br><span class="line">    <span class="keyword">return</span> a</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    my_func()</span><br></pre></td></tr></table></figure>
+<p>输出为</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Line <span class="comment">#    Mem usage    Increment  Occurences   Line Contents</span></span><br><span class="line">============================================================</span><br><span class="line">     <span class="number">3</span>   <span class="number">38.816</span> MiB   <span class="number">38.816</span> MiB           <span class="number">1</span>   @profile</span><br><span class="line">     <span class="number">4</span>                                         <span class="function"><span class="keyword">def</span> <span class="title">my_func</span>():</span></span><br><span class="line">     <span class="number">5</span>   <span class="number">46.492</span> MiB    <span class="number">7.676</span> MiB           <span class="number">1</span>       a = [<span class="number">1</span>] * (<span class="number">10</span> ** <span class="number">6</span>)</span><br><span class="line">     <span class="number">6</span>  <span class="number">199.117</span> MiB  <span class="number">152.625</span> MiB           <span class="number">1</span>       b = [<span class="number">2</span>] * (<span class="number">2</span> * <span class="number">10</span> ** <span class="number">7</span>)</span><br><span class="line">     <span class="number">7</span>   <span class="number">46.629</span> MiB -<span class="number">152.488</span> MiB           <span class="number">1</span>       <span class="keyword">del</span> b</span><br><span class="line">     <span class="number">8</span>   <span class="number">46.629</span> MiB    <span class="number">0.000</span> MiB           <span class="number">1</span>       <span class="keyword">return</span> a</span><br></pre></td></tr></table></figure>
+<p>另外memory_profiler，提供了mprof工具可以监听程序的内存使用量，并绘制内存占用图形，在针对特定场景的内存占用分析时也很有用。<br>以某个celery任务为例，查看从项目启动到结束时，内存的占用量</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 增加入口脚本，执行celery，定时记录内存</span></span><br><span class="line">mprof run run.py  worker -A user -c <span class="number">1</span> -Q Es_request_sync</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看内存随时间变化图</span></span><br><span class="line">mprof plot</span><br></pre></td></tr></table></figure>
+<p>结果如图<br><img src="https://cdn.nlark.com/yuque/0/2021/png/190170/1627629803319-02d13604-843b-4576-9ea6-e67a4ff83b50.png#clientId=u4fc9c4ae-017a-4&from=paste&height=1030&id=ua3413d52&margin=%5Bobject%20Object%5D&name=image.png&originHeight=1030&originWidth=2222&originalType=binary&ratio=1&size=510157&status=done&style=none&taskId=ua3b2bf59-32e9-48f0-a814-a95f4eda249&width=2222" alt="image.png"><br>此外memroy_profiler还提供了个很实用的功能，在达到多大内存后，进入debug模式</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python -m memory_profiler --pdb-mmem=<span class="number">100</span> my_script.py</span><br></pre></td></tr></table></figure>
+
+
+<p>tracemalloc是我最推荐的一个内存分析工具，它是python内置的跟踪python分配内存工具，主要提供:</p>
+<ul>
+<li>回溯分配对象的位置</li>
+<li>每个文件名和每个行号分配的内存块的统计信息：分配的内存块的总大小、数量和平均大小</li>
+<li>计算两个快照之间的差异以检测内存泄漏</li>
+</ul>
+<p>默认情况提供最近1帧的堆栈历史，可以通过<a target="_blank" rel="noopener" href="https://docs.python.org/zh-cn/3/using/cmdline.html#envvar-PYTHONTRACEMALLOC">PYTHONTRACEMALLOC</a>选项来调整最大记录帧。<br>举个官方的示例，获取内存分配最多的10个文件<br>1.引入依赖，启动分析</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> tracemalloc</span><br><span class="line"></span><br><span class="line">tracemalloc.start()</span><br><span class="line"></span><br><span class="line"><span class="comment"># ... run your application ...</span></span><br><span class="line"></span><br><span class="line">snapshot = tracemalloc.take_snapshot()</span><br><span class="line">top_stats = snapshot.statistics(<span class="string">&#x27;lineno&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;[ Top 10 ]&quot;</span>)</span><br><span class="line"><span class="keyword">for</span> stat <span class="keyword">in</span> top_stats[:<span class="number">10</span>]:</span><br><span class="line">    <span class="built_in">print</span>(stat)</span><br></pre></td></tr></table></figure>
+<p>2.查看结果</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[ Top <span class="number">10</span> ]</span><br><span class="line">&lt;frozen importlib._bootstrap&gt;:<span class="number">716</span>: size=<span class="number">4855</span> KiB, count=<span class="number">39328</span>, average=<span class="number">126</span> B</span><br><span class="line">&lt;frozen importlib._bootstrap&gt;:<span class="number">284</span>: size=<span class="number">521</span> KiB, count=<span class="number">3199</span>, average=<span class="number">167</span> B</span><br><span class="line">/usr/lib/python3<span class="number">.4</span>/collections/__init__.py:<span class="number">368</span>: size=<span class="number">244</span> KiB, count=<span class="number">2315</span>, average=<span class="number">108</span> B</span><br><span class="line">/usr/lib/python3<span class="number">.4</span>/unittest/case.py:<span class="number">381</span>: size=<span class="number">185</span> KiB, count=<span class="number">779</span>, average=<span class="number">243</span> B</span><br><span class="line">/usr/lib/python3<span class="number">.4</span>/unittest/case.py:<span class="number">402</span>: size=<span class="number">154</span> KiB, count=<span class="number">378</span>, average=<span class="number">416</span> B</span><br><span class="line">/usr/lib/python3<span class="number">.4</span>/abc.py:<span class="number">133</span>: size=<span class="number">88.7</span> KiB, count=<span class="number">347</span>, average=<span class="number">262</span> B</span><br><span class="line">&lt;frozen importlib._bootstrap&gt;:<span class="number">1446</span>: size=<span class="number">70.4</span> KiB, count=<span class="number">911</span>, average=<span class="number">79</span> B</span><br><span class="line">&lt;frozen importlib._bootstrap&gt;:<span class="number">1454</span>: size=<span class="number">52.0</span> KiB, count=<span class="number">25</span>, average=<span class="number">2131</span> B</span><br><span class="line">&lt;string&gt;:<span class="number">5</span>: size=<span class="number">49.7</span> KiB, count=<span class="number">148</span>, average=<span class="number">344</span> B</span><br><span class="line">/usr/lib/python3<span class="number">.4</span>/sysconfig.py:<span class="number">411</span>: size=<span class="number">48.0</span> KiB, count=<span class="number">1</span>, average=<span class="number">48.0</span> KiB</span><br></pre></td></tr></table></figure>
+<p>除此之外，还可以对比两个快照之间的差别，这块比memory_profiler有更大的优势，能在运行时，动态的比较两次行为前后内存差异的原因。</p>
+<h1 id="0x02-常见场景"><a href="#0x02-常见场景" class="headerlink" title="0x02 常见场景"></a>0x02 常见场景</h1><p>python主要使用引用计数做gc，例如对象被创建、引用，引用计数会加1，当对象被销毁、离开作用域时会减1，当某对象的引用计数值为0时，，那么它的内存就会被释放掉。​<br>所以在某些场景下，python不会主动去释放内存:</p>
+<ol>
+<li>循环引用</li>
+</ol>
+<p>循环引用的数据结构在Python中是一个很棘手的问题，因为正常的垃圾回收机制不能适用于这种情形。 例如考虑如下代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Data</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__del__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;Data.__del__&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Node class involving a cycle</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Node</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.data = Data()</span><br><span class="line">        self.parent = <span class="literal">None</span></span><br><span class="line">        self.children = []</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">add_child</span>(<span class="params">self, child</span>):</span></span><br><span class="line">        self.children.append(child)</span><br><span class="line">        child.parent = self</span><br></pre></td></tr></table></figure>
+<p>下面我们使用这个代码来做一些垃圾回收试验：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = Data()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">del</span> a <span class="comment"># Immediately deleted</span></span><br><span class="line">Data.__del__</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = Node()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">del</span> a <span class="comment"># Immediately deleted</span></span><br><span class="line">Data.__del__</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = Node()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a.add_child(Node())</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">del</span> a <span class="comment"># Not deleted (no message)</span></span><br></pre></td></tr></table></figure>
+<p>可以看到，最后一个的删除时打印语句没有出现。原因是Python的垃圾回收机制是基于简单的引用计数。 当一个对象的引用数变成0的时候才会立即删除掉。而对于循环引用这个条件永远不会成立。 因此，在上面例子中最后部分，父节点和孩子节点互相拥有对方的引用，导致每个对象的引用计数都不可能变成0。</p>
+<ol start="2">
+<li>容器对象</li>
+</ol>
+<p>例如，常见的python禁止参数默认值设置为list或map，如下key一直不会被清空，并且占用越来越大</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="function"><span class="keyword">def</span> <span class="title">memory_leak</span>(<span class="params">key=[]</span>):</span></span><br><span class="line"><span class="meta">... </span>    key.append(<span class="number">1</span>)</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(<span class="built_in">len</span>(key))</span><br><span class="line">...</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>memory_leak()</span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>memory_leak()</span><br><span class="line"><span class="number">2</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>memory_leak()</span><br><span class="line"><span class="number">3</span></span><br></pre></td></tr></table></figure>
+
+
+<h1 id="0xff-参考文档"><a href="#0xff-参考文档" class="headerlink" title="0xff 参考文档"></a>0xff 参考文档</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.cppcns.com/jiaoben/python/365539.html">http://www.cppcns.com/jiaoben/python/365539.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000038277797">https://segmentfault.com/a/1190000038277797</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.python.org/zh-cn/3/library/pdb.html">https://docs.python.org/zh-cn/3/library/pdb.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.python.org/zh-cn/3/library/tracemalloc.html">https://docs.python.org/zh-cn/3/library/tracemalloc.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://floatingoctothorpe.uk/2017/dumping-memory-with-gdb.html">https://floatingoctothorpe.uk/2017/dumping-memory-with-gdb.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://mozillazg.com/2017/07/debug-running-python-process-with-gdb.html">https://mozillazg.com/2017/07/debug-running-python-process-with-gdb.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://man.cx/xxd(1)">https://man.cx/xxd(1)</a></li>
+<li><a target="_blank" rel="noopener" href="https://chase-seibert.github.io/blog/2013/08/03/diagnosing-memory-leaks-python.html">https://chase-seibert.github.io/blog/2013/08/03/diagnosing-memory-leaks-python.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://python3-cookbook.readthedocs.io/zh_CN/latest/c08/p23_managing_memory_in_cyclic_data_structures.html">https://python3-cookbook.readthedocs.io/zh_CN/latest/c08/p23_managing_memory_in_cyclic_data_structures.html</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/python/" rel="tag"># python</a>
+              <a href="/tags/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/" rel="tag"># 内存泄漏</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/201911/golang-defer%E7%94%A8%E6%B3%95/" rel="prev" title="golang defer用法">
+      <i class="fa fa-chevron-left"></i> golang defer用法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/202108/python-pdb%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/" rel="next" title="python pdb简明教程">
+      python pdb简明教程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x00-%E8%83%8C%E6%99%AF"><span class="nav-text">0x00 背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-%E6%8E%92%E6%9F%A5%E5%B7%A5%E5%85%B7"><span class="nav-text">0x01 排查工具</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-gdb%E3%80%81pdb"><span class="nav-text">1. gdb、pdb</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-objgraph%E3%80%81guppy"><span class="nav-text">2. objgraph、guppy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-memory-profiler%E3%80%81tracemalloc"><span class="nav-text">3. memory_profiler、tracemalloc</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-%E5%B8%B8%E8%A7%81%E5%9C%BA%E6%99%AF"><span class="nav-text">0x02 常见场景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0xff-%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-text">0xff 参考文档</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="vlean"
+      src="/imgs/avatar.jpg">
+  <p class="site-author-name" itemprop="name">vlean</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/vlean" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;vlean" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dolinpa@gmail.com" title="E-Mail → mailto:dolinpa@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">豫ICP备13013580号-2 </a>
+      <img src="/imgs/beian.png" style="display: inline-block;">
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-dragon"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">vlean</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '957f3e366750b08899b8',
+      clientSecret: 'a617c1b674f4ca1c20936b21c2beebfa06b5b10a',
+      repo        : 'vlean.github.io',
+      owner       : 'vlean',
+      admin       : ['vlean'],
+      id          : '12df89bf218b48dbe268961ac89d5402',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
