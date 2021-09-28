@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vlean.xyz","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="0x00 Nginx手册 Nginx配置文档 官方文档  0x01 常用配置详细参考: nginx配置语法、实用配置 location匹配命令    参数 名称 说明 示例    空 普通前端匹配的路径 location 后没有参数直接跟着 标准 URI，表示前缀匹配，代表跟请求中的 URI 从头开始匹配。 location &#x2F; &amp;#123;&amp;#125;   &#x3D; 精确匹配的路径 用于标准 URI">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nginx速查手册">
+<meta property="og:url" content="https://www.vlean.xyz/202109/nginx-config/index.html">
+<meta property="og:site_name" content="vlean&#39;s blog">
+<meta property="og:description" content="0x00 Nginx手册 Nginx配置文档 官方文档  0x01 常用配置详细参考: nginx配置语法、实用配置 location匹配命令    参数 名称 说明 示例    空 普通前端匹配的路径 location 后没有参数直接跟着 标准 URI，表示前缀匹配，代表跟请求中的 URI 从头开始匹配。 location &#x2F; &amp;#123;&amp;#125;   &#x3D; 精确匹配的路径 用于标准 URI">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-09-28T06:53:40.000Z">
+<meta property="article:modified_time" content="2021-09-28T11:09:55.260Z">
+<meta property="article:author" content="vlean">
+<meta property="article:tag" content="nginx">
+<meta property="article:tag" content="手册">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://www.vlean.xyz/202109/nginx-config/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Nginx速查手册 | vlean's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">vlean's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">4</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user-astronaut fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-reader">
+
+    <a href="/reader/" rel="section"><i class="fa fa-book-reader fa-fw"></i>读书计划</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vlean.xyz/202109/nginx-config/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/imgs/avatar.jpg">
+      <meta itemprop="name" content="vlean">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="vlean's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Nginx速查手册
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-09-28 14:53:40 / 修改时间：19:09:55" itemprop="dateCreated datePublished" datetime="2021-09-28T14:53:40+08:00">2021-09-28</time>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="0x00-Nginx手册"><a href="#0x00-Nginx手册" class="headerlink" title="0x00 Nginx手册"></a>0x00 Nginx手册</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://tsejx.github.io/devops-guidebook/server/nginx">Nginx配置文档</a></li>
+<li><a target="_blank" rel="noopener" href="http://nginx.org/en/docs/">官方文档</a></li>
+</ul>
+<h2 id="0x01-常用配置"><a href="#0x01-常用配置" class="headerlink" title="0x01 常用配置"></a>0x01 常用配置</h2><p>详细参考: <a target="_blank" rel="noopener" href="https://tsejx.github.io/devops-guidebook/server/nginx/configuration-grammar">nginx配置语法</a>、<a target="_blank" rel="noopener" href="https://tsejx.github.io/devops-guidebook/server/nginx/practical-configuration">实用配置</a></p>
+<h3 id="location"><a href="#location" class="headerlink" title="location"></a><code>location</code></h3><p>匹配命令</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>名称</th>
+<th>说明</th>
+<th align="left">示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>空</td>
+<td>普通前端匹配的路径</td>
+<td>location 后没有参数直接跟着 <strong>标准 URI</strong>，表示前缀匹配，代表跟请求中的 URI 从头开始匹配。</td>
+<td align="left"><code>location / &#123;&#125;</code></td>
+</tr>
+<tr>
+<td><code>=</code></td>
+<td>精确匹配的路径</td>
+<td>用于<strong>标准 URI</strong> 前，要求请求字符串与其精准匹配，成功则立即处理，nginx 停止搜索其他匹配。</td>
+<td align="left"><code>location = / &#123;&#125;</code></td>
+</tr>
+<tr>
+<td><code>^~</code></td>
+<td>抢占式前缀匹配的路径</td>
+<td>用于<strong>标准 URI</strong> 前，并要求一旦匹配到就会立即处理，不再去匹配其他的那些个正则 URI，一般用来匹配目录</td>
+<td align="left"><code>location ^~ / &#123;&#125;</code></td>
+</tr>
+<tr>
+<td><code>~</code></td>
+<td>正则匹配</td>
+<td>用于<strong>正则 URI</strong> 前，表示 URI 包含正则表达式， <strong>区分</strong>大小写</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td><code>~*</code></td>
+<td>正则匹配</td>
+<td>用于<strong>正则 URI</strong> 前， 表示 URI 包含正则表达式， <strong>不区分</strong>大小写</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td><code>@</code></td>
+<td>命名路径</td>
+<td>@ 定义一个命名的 location，@ 定义的 locaiton 名字一般用在内部定向，例如 error_page, try_files 命令中。它的功能类似于编程中的 goto。</td>
+<td align="left"><code>location @a &#123;&#125;</code></td>
+</tr>
+</tbody></table>
+<p>nginx <code>location</code> 的大致匹配顺序：</p>
+<ul>
+<li>精确匹配的路径和两类前缀匹配的路径（字母序，如果某个精确匹配的路径的名字和前缀匹配的路径相同，精确匹配的路径排在前面）</li>
+<li>正则路径（出现序）</li>
+<li>命名路径（字母序）</li>
+<li>无名路径（出现序）</li>
+</ul>
+<span id="more"></span>
+
+
+<h3 id="if"><a href="#if" class="headerlink" title="if"></a><code>if</code></h3><p><code>if</code> 指令仅存在于 <code>server</code> 和 <code>location</code> 块中</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 语法</span></span><br><span class="line"><span class="attribute">if</span> (condition) &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><code>condition</code> 判断条件：</p>
+<ul>
+<li><code>$variable</code> 仅为变量时，值为空或以 0 开头字符串都会被当做 <code>false</code> 处理</li>
+<li><code>=</code> 或 <code>!=</code> 相等或不等</li>
+<li><code>~</code> 正则匹配</li>
+<li><code>!~</code> 非正则匹配</li>
+<li><code>~*</code> 正则匹配，不区分大小写</li>
+<li><code>-f</code> 或 <code>! -f</code> 检测文件存在或不存在</li>
+<li><code>-d</code> 或 <code>! -d</code> 检测目录存在或不存在</li>
+<li><code>-e</code> 或 <code>! -e</code> 检测文件、目录、符号链接等存在或不存在</li>
+<li><code>-x</code> 或 <code>! -x</code> 检测文件可以执行或不可执行</li>
+</ul>
+<h2 id="0x02-常用配置"><a href="#0x02-常用配置" class="headerlink" title="0x02 常用配置"></a>0x02 常用配置</h2><h3 id="静态资源服务器"><a href="#静态资源服务器" class="headerlink" title="静态资源服务器"></a>静态资源服务器</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 仅允许指定资源访问，当资源不存在时，返回/index.html</span></span><br><span class="line">server&#123;</span><br><span class="line">  <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">  <span class="attribute">server_name</span> static.vlean.xyz;</span><br><span class="line">  <span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="attribute">index</span> index.html;</span><br><span class="line">    <span class="attribute">try_files</span> $uri $uri/ /index.html;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="attribute">location</span> <span class="regexp">~ .*\.(html|htm|css|js|png|jpeg|gif|svg)$</span> &#123;</span><br><span class="line">    <span class="attribute">root</span> /static/path/;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 仅允许指定资源访问，当资源不存在时，报403</span></span><br><span class="line">server&#123;</span><br><span class="line">  <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">  <span class="attribute">server_name</span> static.vlean.xyz;</span><br><span class="line">  <span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="attribute">index</span> index.html;</span><br><span class="line">    <span class="attribute">try_files</span> $uri $uri/ /index.html;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">set</span> $flag <span class="number">0</span>;</span><br><span class="line">    <span class="attribute">if</span> ( $request_filename <span class="regexp">~* .*\.(html|htm|css|js|png)$)</span>&#123;<span class="attribute">set</span> $flag <span class="number">1</span>;&#125;</span><br><span class="line">    <span class="attribute">if</span> ( $request_filename = <span class="string">&quot;&quot;</span>)&#123;<span class="attribute">set</span> $flag <span class="number">1</span>;&#125;</span><br><span class="line">    <span class="attribute">if</span> ( $request_filename = <span class="string">&quot;/&quot;</span>)&#123;<span class="attribute">set</span> $flag <span class="number">1</span>;&#125;</span><br><span class="line">    <span class="attribute">if</span> ( $flag != <span class="number">1</span> ) &#123;</span><br><span class="line">      <span class="attribute">return</span> <span class="number">403</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="PHP-FPM-laravel"><a href="#PHP-FPM-laravel" class="headerlink" title="PHP-FPM/laravel"></a>PHP-FPM/laravel</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">  <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">  <span class="attribute">server_name</span> php.vlean.com;</span><br><span class="line">  <span class="attribute">root</span> /web/public;</span><br><span class="line"></span><br><span class="line">  <span class="attribute">index</span> index.html index.htm index.php;</span><br><span class="line">  <span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="attribute">try_files</span> $uri $uri/ /index.php?$query_string;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="attribute">location</span> <span class="regexp">~ \.php$</span> &#123;</span><br><span class="line">    <span class="comment"># 使用socket或端口接收请求</span></span><br><span class="line">    <span class="comment">#fastcgi_pass unix:/var/run/php7.2-fpm.sock;</span></span><br><span class="line">    <span class="attribute">fastcgi_pass</span> <span class="number">127.0.0.1:9000</span>;</span><br><span class="line">    <span class="attribute">fastcgi_index</span> index.php;</span><br><span class="line">    <span class="attribute">fastcgi_param</span> SCRIPT_FILENAME $realpath_root$fastcgi_script_name;</span><br><span class="line">    <span class="attribute">include</span> fastcgi_params;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Python-Wsgi"><a href="#Python-Wsgi" class="headerlink" title="Python Wsgi"></a>Python Wsgi</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span>      <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> python.vlean.xyz;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">location</span> / &#123;</span><br><span class="line">        <span class="attribute">root</span> /web/fe/;</span><br><span class="line">		    <span class="attribute">index</span> index.html;</span><br><span class="line">        <span class="attribute">try_files</span> $uri $uri/ /index.html;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="attribute">location</span> /api/ &#123;</span><br><span class="line">        <span class="attribute">include</span> uwsgi_params;</span><br><span class="line">        <span class="attribute">uwsgi_pass</span> <span class="number">127.0.0.1:9527</span>;</span><br><span class="line">        <span class="attribute">uwsgi_param</span> UWSGI_SCRIPT web.wsgi;</span><br><span class="line">        <span class="attribute">uwsgi_param</span> UWSGI_CHDIR /web/path;</span><br><span class="line">        <span class="attribute">client_max_body_size</span>  <span class="number">20m</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h3 id="Websocket反向代理"><a href="#Websocket反向代理" class="headerlink" title="Websocket反向代理"></a>Websocket反向代理</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.xncoding.com/2018/03/12/fullstack/nginx-websocket.html">nginx反向代理websocket</a></p>
+</blockquote>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># map指令可以将变量组合成为新的变量，会根据客户端传来的连接中是否</span></span><br><span class="line"><span class="comment"># 带有Upgrade头来决定是否给源站传递Connection头， 这样做的方法比直接全部传递upgrade更加优雅</span></span><br><span class="line"><span class="attribute">map</span> $http_upgrade $connection_upgrade &#123;</span><br><span class="line">  <span class="attribute">default</span> upgrade;</span><br><span class="line">  &#x27;&#x27; close;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">  <span class="attribute">listen</span>       <span class="number">80</span>;</span><br><span class="line">  <span class="attribute">server_name</span> local.vlean.xyz;</span><br><span class="line"></span><br><span class="line">  <span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="comment"># 读写超时时间,默认60s</span></span><br><span class="line">    <span class="attribute">proxy_read_timeout</span> <span class="number">300s</span>;</span><br><span class="line">    <span class="attribute">proxy_send_timeout</span> <span class="number">300s</span>;</span><br><span class="line"></span><br><span class="line">		<span class="comment"># 允许重新定义或附加字段到传递给代理服务器的请求标头。</span></span><br><span class="line">    <span class="comment"># 该value可以包含文本，变量，以及它们的组合。</span></span><br><span class="line">    <span class="comment"># 当且仅当proxy_set_header当前级别上没有定义任何指令时，这些指令才从先前的配置级别继承。</span></span><br><span class="line">    <span class="comment"># 默认情况下，只重新定义了两个字段：Host和Connection</span></span><br><span class="line">    <span class="comment"># http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 多级代理websocket协议，websocket之前可以去除Host</span></span><br><span class="line">    <span class="attribute">proxy_set_header</span> Host $host;</span><br><span class="line">    <span class="attribute">proxy_set_header</span> X-Real-IP $remote_addr;</span><br><span class="line">    <span class="attribute">proxy_set_header</span> X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">proxy_http_version</span> <span class="number">1</span>.<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 升级协议为websocket</span></span><br><span class="line">    <span class="attribute">proxy_set_header</span> Upgrade $http_upgrade;</span><br><span class="line">    <span class="attribute">proxy_set_header</span> Connection $connection_upgrade;</span><br><span class="line">    <span class="attribute">proxy_pass</span> http://127.0.0.1:9527;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Gzip压缩"><a href="#Gzip压缩" class="headerlink" title="Gzip压缩"></a>Gzip压缩</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="comment"># 开启 gzip 压缩(默认 off)</span></span><br><span class="line">    <span class="attribute">gzip</span> <span class="literal">on</span>;</span><br><span class="line">    <span class="comment"># 设置压缩文件的类型（text/html)</span></span><br><span class="line">    <span class="attribute">gzip_types</span> text/csv text/xml text/css text/plain text/javascript application/javascript application/json application/xml;</span><br><span class="line">    <span class="comment"># 设置 gzip 所需的 HTTP 协议最低版本（HTTP/1.1, HTTP/1.0）</span></span><br><span class="line">    <span class="attribute">gzip_http_version</span> <span class="number">1</span>.<span class="number">1</span>;</span><br><span class="line">    <span class="comment"># 设置压缩级别，压缩级别越高压缩时间越长  （1-9）</span></span><br><span class="line">    <span class="attribute">gzip_comp_level</span> <span class="number">4</span>;</span><br><span class="line">    <span class="comment"># 设置压缩的最小字节数， 页面 Content-Length 获取</span></span><br><span class="line">    <span class="attribute">gzip_min_length</span> <span class="number">1000</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="缓存"><a href="#缓存" class="headerlink" title="缓存"></a>缓存</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 对 html 文件缓存，绝对过期时间</span></span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~ .*\.(htm|html)$</span> &#123;</span><br><span class="line">  <span class="comment"># h/d/max 小时/天/无限</span></span><br><span class="line">  <span class="attribute">expires</span> <span class="number">24h</span>;</span><br><span class="line">  <span class="attribute">root</span> /var/www/html;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 对静态资源缓存，相对过期时间</span></span><br><span class="line"><span class="comment"># Cache-Control: public|private|no-cache|nly-if-cached</span></span><br><span class="line"><span class="comment"># max-age=second</span></span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~* \.(js|css|png|jpg|gif)$</span> &#123;</span><br><span class="line">    <span class="attribute">add_header</span>  Cache-Control public,max-age=<span class="number">86400</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="跨域"><a href="#跨域" class="headerlink" title="跨域"></a>跨域</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">  <span class="attribute">listen</span>       <span class="number">80</span>;</span><br><span class="line">  <span class="attribute">server_name</span>  example.com;</span><br><span class="line"></span><br><span class="line">  <span class="comment"># 全局变量获得当前请求 origin，带 Cookie 的请求不支持 *（通配符）</span></span><br><span class="line">  <span class="attribute">add_header</span> <span class="string">&#x27;Access-Control-Allow-Origin&#x27;</span> $http_origin;</span><br><span class="line">  <span class="comment"># 为 true 可带上 cookie</span></span><br><span class="line">  <span class="attribute">add_header</span> <span class="string">&#x27;Access-Control-Allow-Credentials&#x27;</span> <span class="string">&#x27;true&#x27;</span>;</span><br><span class="line">  <span class="comment"># 允许请求方法，前后端域名不一致时，需要带上OPTIONS</span></span><br><span class="line">  <span class="attribute">add_header</span> <span class="string">&#x27;Access-Control-Allow-Methods&#x27;</span> <span class="string">&#x27;GET, POST, OPTIONS&#x27;</span>;</span><br><span class="line">  <span class="comment"># 允许请求的 header，可以为 *（通配符）</span></span><br><span class="line">  <span class="attribute">add_header</span> <span class="string">&#x27;Access-Control-Allow-Headers&#x27;</span> $http_access_control_request_headers;</span><br><span class="line">  <span class="attribute">add_header</span> <span class="string">&#x27;Access-Control-Expose-Headers&#x27;</span> <span class="string">&#x27;Content-Length,Content-Range&#x27;</span>;</span><br><span class="line"></span><br><span class="line">  <span class="attribute">if</span> ($request_method = <span class="string">&#x27;OPTIONS&#x27;</span>) &#123;</span><br><span class="line">    <span class="comment"># OPTIONS 请求的有效期，在有效期内不用发出另一条预检请求</span></span><br><span class="line">    <span class="attribute">add_header</span> <span class="string">&#x27;Access-Control-Max-Age&#x27;</span> <span class="number">1728000</span>;</span><br><span class="line">    <span class="attribute">add_header</span> <span class="string">&#x27;Content-Type&#x27;</span> <span class="string">&#x27;text/plain; charset=utf-8&#x27;</span>;</span><br><span class="line">    <span class="attribute">add_header</span> <span class="string">&#x27;Content-Length&#x27;</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 200 也可以</span></span><br><span class="line">    <span class="attribute">return</span> <span class="number">204</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="attribute">root</span>  /usr/share/nginx/html/be;</span><br><span class="line">    <span class="attribute">index</span> index.html;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="防盗链"><a href="#防盗链" class="headerlink" title="防盗链"></a>防盗链</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> <span class="regexp">~* \.(gif|jpg|png|jpeg)$</span> &#123;</span><br><span class="line">  <span class="comment"># 只允许 192.168.0.1 请求资源</span></span><br><span class="line">  <span class="comment"># none 表示没带 refer</span></span><br><span class="line">  <span class="comment"># blocked 表示不是标准 HTTP 请求</span></span><br><span class="line">  <span class="attribute">valid_referers</span> <span class="literal">none</span> <span class="literal">blocked</span> <span class="number">192.168.0.1</span>;</span><br><span class="line"></span><br><span class="line">  <span class="attribute">if</span> ($invalid_referer) &#123;</span><br><span class="line">    <span class="attribute">rewrite</span><span class="regexp"> ^/</span> http://$host/logo.png;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="强制HTTPS"><a href="#强制HTTPS" class="headerlink" title="强制HTTPS"></a>强制HTTPS</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">  <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line"></span><br><span class="line">  <span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="attribute">return</span> <span class="number">301</span> https://$host$request_uri;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">  <span class="attribute">listen</span> <span class="number">443</span> ssl;</span><br><span class="line">  <span class="comment"># 公钥，发送到连接服务器的客户端</span></span><br><span class="line">  <span class="attribute">ssl_certificate</span>         cert/example.com.pem;</span><br><span class="line">  <span class="comment"># 私钥，权限要得到保护但 Nginx 的主进程能够读取</span></span><br><span class="line">  <span class="attribute">ssl_certificate_key</span>     cert/example.com.key;</span><br><span class="line">  <span class="comment"># 设置 SSL/TLS 会话缓存的类型和大小</span></span><br><span class="line">  <span class="attribute">ssl_session_cache</span>       shared:SSL:<span class="number">10m</span>;</span><br><span class="line">  <span class="comment"># 客户端可以重用会话缓存中 SSL 参数的过期时间</span></span><br><span class="line">  <span class="attribute">ssl_session_timeout</span>     <span class="number">10m</span>;</span><br><span class="line">  <span class="attribute">ssl_protocols</span>               SSLv2 TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">  <span class="attribute">ssl_ciphers</span>                 ECDHE-RSA-AES256-SHA384:AES256-SHA256:RC4:HIGH:!MD5:!aNULL:!eNULL:!NULL:!DH:!EDH:!AESGCM;</span><br><span class="line">  <span class="attribute">ssl_prefer_server_ciphers</span>   <span class="literal">on</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="动静分离"><a href="#动静分离" class="headerlink" title="动静分离"></a>动静分离</h3><pre><code class="nginx">upstream static &#123;
+  server host:port;
+&#125;
+
+upstream dynamic &#123;
+  server host:port;
+&#125;
+
+server &#123;
+  listen 80;
+
+  # 拦截动态资源
+  location ~ .*\.(php|jsp)$ &#123;
+    proxy_pass http://dynamic;
+  &#125;
+
+  # 拦截静态资源
+  location ~ .*\.(jpg|png|htm|html|css|js)$ &#123;
+    root /data/;  #html目录
+    proxy_pass http://static;
+    autoindex on;  #自动打开文件列表
+  &#125;
+&#125;
+</code></pre>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/nginx/" rel="tag"># nginx</a>
+              <a href="/tags/%E6%89%8B%E5%86%8C/" rel="tag"># 手册</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202108/python-pdb%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/" rel="prev" title="python pdb简明教程">
+      <i class="fa fa-chevron-left"></i> python pdb简明教程
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x00-Nginx%E6%89%8B%E5%86%8C"><span class="nav-text">0x00 Nginx手册</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01-%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE"><span class="nav-text">0x01 常用配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#location"><span class="nav-text">location</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#if"><span class="nav-text">if</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02-%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE"><span class="nav-text">0x02 常用配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9D%99%E6%80%81%E8%B5%84%E6%BA%90%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-text">静态资源服务器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PHP-FPM-laravel"><span class="nav-text">PHP-FPM&#x2F;laravel</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Python-Wsgi"><span class="nav-text">Python Wsgi</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Websocket%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86"><span class="nav-text">Websocket反向代理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Gzip%E5%8E%8B%E7%BC%A9"><span class="nav-text">Gzip压缩</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%93%E5%AD%98"><span class="nav-text">缓存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%A8%E5%9F%9F"><span class="nav-text">跨域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%98%B2%E7%9B%97%E9%93%BE"><span class="nav-text">防盗链</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%BA%E5%88%B6HTTPS"><span class="nav-text">强制HTTPS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E9%9D%99%E5%88%86%E7%A6%BB"><span class="nav-text">动静分离</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="vlean"
+      src="/imgs/avatar.jpg">
+  <p class="site-author-name" itemprop="name">vlean</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/vlean" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;vlean" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dolinpa@gmail.com" title="E-Mail → mailto:dolinpa@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">豫ICP备13013580号-2 </a>
+      <img src="/imgs/beian.png" style="display: inline-block;">
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-dragon"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">vlean</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '957f3e366750b08899b8',
+      clientSecret: 'a617c1b674f4ca1c20936b21c2beebfa06b5b10a',
+      repo        : 'vlean.github.io',
+      owner       : 'vlean',
+      admin       : ['vlean'],
+      id          : '0ca7583c5f8c39c44ffcc77312f8ada9',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
