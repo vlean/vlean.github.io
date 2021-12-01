@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vlean.xyz","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="0x00 前言泛型已经确定将在go 1.18里发布，预计到22年2月份就可以使用到release版本的go泛型了。虽然官方并不建议大家在第一时间去把内部组件升级到泛型版本，但是提前了解下泛型对我们使用上有什么影响还是很有必要的。个人认为Go泛型是go在1.11支持go mod之后对语言层面最大的一次变动。早在go 1.17时，在master分支里就能看到go泛型的身影，只是默认不开启，即cmd&#x2F;c">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go泛型参考">
+<meta property="og:url" content="https://www.vlean.xyz/202112/go-generics/index.html">
+<meta property="og:site_name" content="vlean&#39;s blog">
+<meta property="og:description" content="0x00 前言泛型已经确定将在go 1.18里发布，预计到22年2月份就可以使用到release版本的go泛型了。虽然官方并不建议大家在第一时间去把内部组件升级到泛型版本，但是提前了解下泛型对我们使用上有什么影响还是很有必要的。个人认为Go泛型是go在1.11支持go mod之后对语言层面最大的一次变动。早在go 1.17时，在master分支里就能看到go泛型的身影，只是默认不开启，即cmd&#x2F;c">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-01T08:02:13.000Z">
+<meta property="article:modified_time" content="2021-12-01T08:07:07.991Z">
+<meta property="article:author" content="vlean">
+<meta property="article:tag" content="go">
+<meta property="article:tag" content="generics">
+<meta property="article:tag" content="泛型">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://www.vlean.xyz/202112/go-generics/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Go泛型参考 | vlean's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">vlean's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">5</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user-astronaut fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-reader">
+
+    <a href="/reader/" rel="section"><i class="fa fa-book-reader fa-fw"></i>读书计划</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vlean.xyz/202112/go-generics/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/imgs/avatar.jpg">
+      <meta itemprop="name" content="vlean">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="vlean's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go泛型参考
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-12-01 16:02:13 / 修改时间：16:07:07" itemprop="dateCreated datePublished" datetime="2021-12-01T16:02:13+08:00">2021-12-01</time>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h2><p>泛型已经确定将在go 1.18里发布，预计到22年2月份就可以使用到release版本的go泛型了。虽然官方并不建议大家在第一时间去把内部组件升级到泛型版本，但是提前了解下泛型对我们使用上有什么影响还是很有必要的。<br>个人认为Go泛型是go在1.11支持go mod之后对语言层面最大的一次变动。早在go 1.17时，在master分支里就能看到go泛型的身影，只是默认不开启，即cmd/compile 的 -G flag 默认值为 0。</p>
+<h2 id="0x01-泛型"><a href="#0x01-泛型" class="headerlink" title="0x01 泛型"></a>0x01 泛型</h2><h3 id="1-规则"><a href="#1-规则" class="headerlink" title="1.规则"></a>1.规则</h3><p>下面看一组基本概念，go泛型实现规则：</p>
+<ul>
+<li>函数使用方括号，接收类型参数列表，形式如 <code>func F[T any](p T) &#123;...&#125;</code><ul>
+<li>可以定义每个类型参数的约束 <code>func F[T Constraint] (p T)&#123;...&#125;</code></li>
+</ul>
+</li>
+<li>类型参数可以被常规参数和函数体使用</li>
+<li>可以定义类型参数列表，形式如<code>type M[T any] []T</code></li>
+<li>类型约束是接口类型</li>
+<li><code>any</code>为允许任何类型的类型约束</li>
+<li>类型限制<ul>
+<li>任意类型：<code>T</code>限制为该类型</li>
+<li>近似类型：<code>~T</code>限制为基础类型为<code>T</code>，如<code>~int</code>对<code>type Enum int</code>也生效</li>
+<li>union类型：<code>T1 | T2 | ....</code>限制为任意列出的类型</li>
+</ul>
+</li>
+<li>泛型函数只能使用所有类型约束允许的操作</li>
+<li>使用泛型函数或类型需要传递类型参数</li>
+<li>类型推断允许在常见情况下省略函数调用的类型参数</li>
+</ul>
+<p>如果你使用过其他的泛型语言，从上面可以看到go不支持的特性：</p>
+<ul>
+<li>没有协变和逆变，简化了泛型概念</li>
+<li>没有元编程支持，反射包不会改变</li>
+<li>只通过接口类型约束类型参数的行为</li>
+<li>缺少操作符支持</li>
+<li>没有可变类型参数支持</li>
+</ul>
+<span id="more"></span>
+
+
+
+<h3 id="2-包变动"><a href="#2-包变动" class="headerlink" title="2.包变动"></a>2.包变动</h3><p>新增<code>[constraints](https://github.com/golang/go/blob/master/src/constraints/constraints.go)</code>包，用于常见的类型参数集合，类型定义如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Signed <span class="keyword">interface</span> &#123;</span><br><span class="line">	~<span class="keyword">int</span> | ~<span class="keyword">int8</span> | ~<span class="keyword">int16</span> | ~<span class="keyword">int32</span> | ~<span class="keyword">int64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Unsigned <span class="keyword">interface</span> &#123;</span><br><span class="line">	~<span class="keyword">uint</span> | ~<span class="keyword">uint8</span> | ~<span class="keyword">uint16</span> | ~<span class="keyword">uint32</span> | ~<span class="keyword">uint64</span> | ~<span class="keyword">uintptr</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Integer <span class="keyword">interface</span> &#123;</span><br><span class="line">	Signed | Unsigned</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Float <span class="keyword">interface</span> &#123;</span><br><span class="line">	~<span class="keyword">float32</span> | ~<span class="keyword">float64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Complex <span class="keyword">interface</span> &#123;</span><br><span class="line">	~<span class="keyword">complex64</span> | ~<span class="keyword">complex128</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Ordered <span class="keyword">interface</span> &#123;</span><br><span class="line">	Integer | Float | ~<span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="3-使用"><a href="#3-使用" class="headerlink" title="3.使用"></a>3.使用</h3><h4 id="any约束"><a href="#any约束" class="headerlink" title="any约束"></a>any约束</h4><p><code>[any](https://github.com/golang/go/issues/33232)</code>和<code>interface&#123;&#125;</code>在含义上是一致的，都能表示任意类型。其实像<code>rune</code>是<code>int32</code>的别名一样，<code>any</code>也是<code>interface&#123;&#125;</code>的别名，只是从语义上更容易理解，写法上也更规范。因此<code>any</code> 其实不是一个关键字。*该规范可以参考这个<a target="_blank" rel="noopener" href="https://github.com/golang/go/issues/33232">链接</a></p>
+<p>因此下面两种写法，含义也是一样的，只是<code>any</code>语义更清楚：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Print1</span>[<span class="title">T</span> <span class="title">any</span>]<span class="params">(s []T)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> _, v := <span class="keyword">range</span> s&#123;</span><br><span class="line">        fmt.Println(v)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// ----</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Print2</span>[<span class="title">T</span> <span class="title">interface</span></span>&#123;&#125;] (s []T) &#123;</span><br><span class="line">	<span class="comment">// print...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id=""><a href="#" class="headerlink" title=""></a></h4><h4 id="多个类型参数"><a href="#多个类型参数" class="headerlink" title="多个类型参数"></a>多个类型参数</h4><p>在一个函数接收多个参数时，定义一个或多个类型参数之前是有区别的。<br>像下面<code>Print1</code>里<code>s1</code>和<code>s2</code>可以是两个不同类型的切片，但<code>Print2</code>里必须是相同元素类型的切片。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Print1</span>[<span class="title">T1</span>, <span class="title">T2</span> <span class="title">any</span>] <span class="params">(s1 []T1, s2 []T2)</span></span> &#123;</span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Print2</span>[<span class="title">T</span> <span class="title">any</span>]<span class="params">(s1 []T, s2 []T)</span></span> &#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h4 id="泛型类型"><a href="#泛型类型" class="headerlink" title="泛型类型"></a>泛型类型</h4><p>除了泛型函数外，我们还可以定义泛型类型。<br>像定义普通类型一样，泛型的定义也是使用<code>type</code>关键字：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Vector 是任意元素类型的切片</span></span><br><span class="line"><span class="keyword">type</span> Vector [T any] []T</span><br></pre></td></tr></table></figure>
+<p>在实际使用中就可以通过制定<code>T</code>的类型来实例化具体类型，例如</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> v Vector[<span class="keyword">int</span>]</span><br><span class="line"><span class="comment">// or</span></span><br><span class="line">v := Vector[<span class="keyword">int</span>]&#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>同时，泛型类型也可以像普通类型一样有方法，方法的接收器类型必须声明与类型定义中相同的类型。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 向v中添加元素</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v *Vector[T])</span> <span class="title">Push</span><span class="params">(x T)</span></span> &#123;</span><br><span class="line">    *v = <span class="built_in">append</span>(*v, x)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h4 id="类型集合"><a href="#类型集合" class="headerlink" title="类型集合"></a>类型集合</h4><p>像<code>constaraints</code>包里定义的那样，使用类似接口定义的形式，可以将一堆类型组合起来，定义一个新的类型:(这里go出现了一种新的语法) <code>~T</code> 含义是所有基础类型为<code>T</code>的类型集合，例如</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> AliasString = <span class="keyword">string</span></span><br><span class="line"><span class="keyword">type</span> StringEnum  <span class="keyword">string</span></span><br><span class="line"><span class="keyword">type</span> UserEnum StringEnum</span><br><span class="line"></span><br><span class="line"><span class="comment">// AnyString包含了上面StringEnum、AliasString、UserEnum等</span></span><br><span class="line"><span class="comment">// 从string派生出来的string类型</span></span><br><span class="line"><span class="keyword">type</span> AnyString <span class="keyword">interface</span>&#123;</span><br><span class="line">	~<span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意，如果<code>T</code>是类型参数或接口类型，不是基础类型，<code>~T</code>与<code>T</code>一起使用时，将报错：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> MyString <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> AnyString <span class="keyword">interface</span>&#123;</span><br><span class="line">	~<span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 下面两个定义无效</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> InvalidString <span class="keyword">interface</span> &#123;</span><br><span class="line">	~MyString <span class="comment">// 因为MyString的基础类型是string，不是MyString</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> InvalidSlice [T any] <span class="keyword">interface</span> &#123;</span><br><span class="line">	~T <span class="comment">// 因为T是一个类型参数，不是基础类型</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="-1"><a href="#-1" class="headerlink" title=""></a></h4><h4 id="可比较类型"><a href="#可比较类型" class="headerlink" title="可比较类型"></a>可比较类型</h4><p>为了判断泛型元素是否有可比较性，go引入新的类型约束<code>comparable</code>，对应为<code>==</code>和<code>!=</code>操作符。可以再结构、数组和接口类型里使用。例如</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取x在s中的位置索引，如果未找到，返回-1</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Index</span>[<span class="title">T</span> <span class="title">comparable</span>]<span class="params">(s []T, x T)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> i, v := <span class="keyword">range</span> s &#123;</span><br><span class="line">        <span class="comment">//v和x具有可比性</span></span><br><span class="line">        <span class="keyword">if</span> v == x &#123;</span><br><span class="line">            <span class="keyword">return</span> i</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同时，<code>compare</code>也可以在接口约束中使用。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 任意具有可比性并且实现了Hash的方法</span></span><br><span class="line"><span class="keyword">type</span> ComparableHasher <span class="keyword">interface</span> &#123;</span><br><span class="line">    comparable</span><br><span class="line">    Hash() <span class="keyword">uintptr</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="类型推断"><a href="#类型推断" class="headerlink" title="类型推断"></a>类型推断</h4><p>在许多情况下，可以借助go类型推断特性，避免显式的写出部分或全部参数。在go编译器不知道怎么从已知类型推断出未知类型时，会报编译错误。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//定义了下面的泛型函数</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Map</span>[<span class="title">F</span>, <span class="title">T</span> <span class="title">any</span>]<span class="params">(s []F, f <span class="keyword">func</span>(F)</span> <span class="title">T</span>) []<span class="title">T</span></span> &#123;</span><br><span class="line">	x := <span class="built_in">make</span>([]T, <span class="built_in">len</span>(s))</span><br><span class="line">	<span class="keyword">for</span> i,v := <span class="keyword">range</span> s &#123;</span><br><span class="line">		x[i] = f(v)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> x</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 已知类型</span></span><br><span class="line"><span class="keyword">var</span> s []<span class="keyword">int</span></span><br><span class="line">f := <span class="function"><span class="keyword">func</span><span class="params">(i <span class="keyword">int</span>)</span><span class="title">int64</span></span> &#123; <span class="keyword">return</span> <span class="keyword">int64</span>(i)&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//可以通过下面这些方式调用</span></span><br><span class="line"><span class="keyword">var</span> r []<span class="keyword">int64</span></span><br><span class="line">r = Map[<span class="keyword">int</span>, <span class="keyword">int64</span>](s, f) <span class="comment">// 明确两个参数</span></span><br><span class="line">r = Map[<span class="keyword">int</span>](s, f) <span class="comment">// 明确第一个参数，推断第二个</span></span><br><span class="line">r = Map(s, f) <span class="comment">// 不指定任意参数，全部走类型推断</span></span><br></pre></td></tr></table></figure>
+
+
+<h4 id="-2"><a href="#-2" class="headerlink" title=""></a></h4><h4 id="反射"><a href="#反射" class="headerlink" title="反射"></a>反射</h4><p>go官方不建议以任何方式更改反射包。<br>当一个类型或函数在被实例化之后，所有的泛型都会被变成非泛型类型或函数。<br>同时，非泛型代码也不可能在未实例化的情况下引用泛型代码，因此目前不支持获取未实例化的泛型类型或函数的反射信息。</p>
+<h2 id="0x02-实践"><a href="#0x02-实践" class="headerlink" title="0x02 实践"></a>0x02 实践</h2><h3 id="1-双向链表"><a href="#1-双向链表" class="headerlink" title="1.双向链表"></a>1.双向链表</h3><p>如果使用<code>interface</code>来实现双向链表的编写，那很多地方就需要去做类型转换。在使用时就很难受，尤其go的类型断言用起来很麻烦。而使用泛型，就解决了这个问题。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;fmt&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> List[T comparable] <span class="keyword">struct</span> &#123;</span><br><span class="line">	head, tail *node[T]</span><br><span class="line">	<span class="built_in">len</span> <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义节点</span></span><br><span class="line"><span class="keyword">type</span> node[T comparable] <span class="keyword">struct</span> &#123;</span><br><span class="line">	data T</span><br><span class="line">	prev *node[T]</span><br><span class="line">	next *node[T]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *List[T])</span> <span class="title">IsEmpty</span><span class="params">()</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> l.head == <span class="literal">nil</span> &amp;&amp; l.tail == <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Add 在链表头部添加元素</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *List[T])</span> <span class="title">Add</span><span class="params">(data T)</span></span>  &#123;</span><br><span class="line">    n := &amp;node[T]&#123; <span class="comment">//不能直接使用node&#123;&#125;</span></span><br><span class="line">		data: data,</span><br><span class="line">		prev: <span class="literal">nil</span>,</span><br><span class="line">		next: l.head,</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> l.IsEmpty() &#123;</span><br><span class="line">		l.head = n</span><br><span class="line">		l.tail = n</span><br><span class="line">	&#125;</span><br><span class="line">	l.head.prev = n</span><br><span class="line">	l.head = n</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Push 在链表尾部添加元素</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *List[T])</span> <span class="title">Push</span><span class="params">(data T)</span></span>  &#123;</span><br><span class="line">	n := &amp;node[T]&#123;</span><br><span class="line">		data: data,</span><br><span class="line">		prev: l.tail,</span><br><span class="line">		next: <span class="literal">nil</span>,</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> l.IsEmpty() &#123;</span><br><span class="line">		l.head = n</span><br><span class="line">		l.tail = n</span><br><span class="line">	&#125;</span><br><span class="line">	l.tail.next = n</span><br><span class="line">	l.tail = n</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Contains 判断是否包含指定元素</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *List[T])</span> <span class="title">Contains</span><span class="params">(data T)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> p:= l.head; p != <span class="literal">nil</span>; p = p.next &#123;</span><br><span class="line">		<span class="keyword">if</span> p.data == data &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Remove 移除指定元素</span></span><br><span class="line"><span class="comment">//用到了比较，所有需要comparable约束</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *List[T])</span> <span class="title">Remove</span><span class="params">(data T)</span></span>  &#123;</span><br><span class="line">	<span class="keyword">for</span> p:= l.head; p != <span class="literal">nil</span>; p = p.next &#123;</span><br><span class="line">		<span class="keyword">if</span> p.data != data &#123;</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> p == l.head &#123;</span><br><span class="line">			l.head = p.next</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> p == l.tail &#123;</span><br><span class="line">			l.tail = p.prev</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> p.prev != <span class="literal">nil</span> &#123;</span><br><span class="line">			p.prev.next = p.next</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> p.next != <span class="literal">nil</span> &#123;</span><br><span class="line">			p.next.prev = p.prev</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Print 打印所有元素</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *List[T])</span> <span class="title">Print</span><span class="params">()</span></span>  &#123;</span><br><span class="line">	<span class="keyword">if</span> l.IsEmpty() &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;link list is empty&quot;</span>)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> p := l.head; p != <span class="literal">nil</span> ; p = p.next &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;[%v] -&gt;&quot;</span>, p.data)</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(<span class="string">&quot;nil&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>执行测试</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	l := List[<span class="keyword">int64</span>]&#123;&#125;</span><br><span class="line">	l.Add(<span class="number">100</span>)</span><br><span class="line">	l.Add(<span class="number">200</span>)</span><br><span class="line">	l.Print()</span><br><span class="line">	fmt.Println(<span class="string">&quot;contains 100 :&quot;</span>, l.Contains(<span class="number">100</span>))</span><br><span class="line">	l.Remove(<span class="number">100</span>)</span><br><span class="line">	fmt.Println(<span class="string">&quot;contains 100 :&quot;</span>, l.Contains(<span class="number">100</span>))</span><br><span class="line">	l.Add(<span class="number">2</span>)</span><br><span class="line">	l.Add(<span class="number">50</span>)</span><br><span class="line">	l.Push(<span class="number">70</span>)</span><br><span class="line">	l.Print()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行结果</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ go build linklist.go &amp;&amp; ./linklist</span><br><span class="line">[200] -&gt;[100] -&gt;nil</span><br><span class="line">contains 100 : <span class="literal">true</span></span><br><span class="line">contains 100 : <span class="literal">false</span></span><br><span class="line">[50] -&gt;[2] -&gt;[200] -&gt;[70] -&gt;nil</span><br></pre></td></tr></table></figure>
+<h3 id="2-maps"><a href="#2-maps" class="headerlink" title="2.maps"></a>2.maps</h3><p>go已经正式提交了支持泛型的maps包，<a target="_blank" rel="noopener" href="https://cs.opensource.google/go/x/exp/+/master:maps/maps.go">详细见</a><br>可以看下其实现</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Package maps defines various functions useful with maps of any type.</span></span><br><span class="line"><span class="keyword">package</span> maps</span><br><span class="line"></span><br><span class="line"><span class="comment">// Keys returns the keys of the map m.</span></span><br><span class="line"><span class="comment">// The keys will be in an indeterminate order.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Keys</span>[<span class="title">M</span> ~<span class="title">map</span>[<span class="title">K</span>]<span class="title">V</span>, <span class="title">K</span> <span class="title">comparable</span>, <span class="title">V</span> <span class="title">any</span>]<span class="params">(m M)</span> []<span class="title">K</span></span> &#123;</span><br><span class="line">	r := <span class="built_in">make</span>([]K, <span class="number">0</span>, <span class="built_in">len</span>(m))</span><br><span class="line">	<span class="keyword">for</span> k := <span class="keyword">range</span> m &#123;</span><br><span class="line">		r = <span class="built_in">append</span>(r, k)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> r</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Values returns the values of the map m.</span></span><br><span class="line"><span class="comment">// The values will be in an indeterminate order.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Values</span>[<span class="title">M</span> ~<span class="title">map</span>[<span class="title">K</span>]<span class="title">V</span>, <span class="title">K</span> <span class="title">comparable</span>, <span class="title">V</span> <span class="title">any</span>]<span class="params">(m M)</span> []<span class="title">V</span></span> &#123;</span><br><span class="line">	r := <span class="built_in">make</span>([]V, <span class="number">0</span>, <span class="built_in">len</span>(m))</span><br><span class="line">	<span class="keyword">for</span> _, v := <span class="keyword">range</span> m &#123;</span><br><span class="line">		r = <span class="built_in">append</span>(r, v)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> r</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//...more</span></span><br></pre></td></tr></table></figure>
+<p>在正常使用map时，得到的是<code>interface&#123;&#125;</code>。使用泛型后，就能很方便的获取map里定义的字段类型<br>例如:</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	m := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>)</span><br><span class="line">	m[<span class="string">&quot;key1&quot;</span>] = <span class="string">&quot;val1&quot;</span></span><br><span class="line">	m[<span class="string">&quot;key2&quot;</span>] = <span class="string">&quot;val2&quot;</span></span><br><span class="line">	fmt.Println(<span class="string">&quot;keys&quot;</span>, strings.Join(maps.Keys(m), <span class="string">&quot;,&quot;</span>)) <span class="comment">//可以直接join，不再需要类型转换</span></span><br><span class="line">	fmt.Println(<span class="string">&quot;vals&quot;</span>, strings.Join(maps.Values(m), <span class="string">&quot;,&quot;</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<h3 id="3-stream"><a href="#3-stream" class="headerlink" title="3.stream"></a>3.stream</h3><p>java8里stream对集合对象的操作非常便利，对业务开发人员对数据的类型转换、处理操作又是再正常不过的需求，但go里受限于泛型的确实，已有的stream包使用也不友好。<br>参考java stream里提供的部分操作:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">filter //过滤流中某些元素</span><br><span class="line">skip(n)、<span class="built_in">limit</span>(n) //跳过n个、保留n个元素</span><br><span class="line">map //遍历每个元素，生成新的流</span><br><span class="line">flatMap // 将所有流打平</span><br><span class="line">reduce //组合操作，将结果传入下次迭代，生成最终结果</span><br><span class="line">allMatch、noneMatch、anyMatch//匹配操作</span><br><span class="line">min、max、count//聚合操作</span><br><span class="line">collect //类型转换</span><br><span class="line">forEach //遍历每个元素</span><br></pre></td></tr></table></figure>
+<p>下面让我看下在go里的实现一个简易的<code>stream</code>操作</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 声明stream类型</span></span><br><span class="line"><span class="keyword">type</span> Stream[T any] <span class="keyword">struct</span> &#123;</span><br><span class="line">	slice []T</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Of 生成新的stream流</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Of</span>[<span class="title">T</span> <span class="title">any</span>]<span class="params">(slice []T)</span> *<span class="title">Stream</span>[<span class="title">T</span>]</span>  &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;Stream[T]&#123;slice: slice&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Filter 过滤元素，结果为true时保留，否则过滤</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Stream[T])</span> <span class="title">Filter</span><span class="params">(predicate <span class="keyword">func</span>(T)</span> <span class="title">bool</span>) *<span class="title">Stream</span>[<span class="title">T</span>]</span>  &#123;</span><br><span class="line">	filtered := []T&#123;&#125;</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> s.slice &#123;</span><br><span class="line">		<span class="keyword">if</span> predicate(item) &#123;</span><br><span class="line">			filtered = <span class="built_in">append</span>(filtered, item)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	s.slice = filtered</span><br><span class="line">	<span class="keyword">return</span> s</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Map 遍历stream，调用predicate生成新的stream流</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Map</span>[<span class="title">T</span> <span class="title">any</span>,<span class="title">R</span> <span class="title">any</span>] <span class="params">(s *Stream[T], predicate <span class="keyword">func</span>(T)</span><span class="title">R</span>) *<span class="title">Stream</span>[<span class="title">R</span>]</span> &#123;</span><br><span class="line">	s2 := []R&#123;&#125;</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> s.slice &#123;</span><br><span class="line">		s2 = <span class="built_in">append</span>(s2, predicate(item))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> Of(s2)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Reduce 遍历stream，将predicate的结果迭代传入predicate中</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Reduce</span>[<span class="title">T</span> <span class="title">any</span>, <span class="title">R</span> <span class="title">any</span>] <span class="params">(s *Stream[T], predicate <span class="keyword">func</span>(T, R)</span><span class="title">R</span>) <span class="title">R</span></span> &#123;</span><br><span class="line">  	<span class="keyword">var</span> result R</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> s.slice &#123;</span><br><span class="line">		result = predicate(item, result)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> result</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ForEach 遍历stream</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Stream[T])</span> <span class="title">ForEach</span><span class="params">(predicate <span class="keyword">func</span>(T)</span>)</span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> s.slice &#123;</span><br><span class="line">		predicate(item)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们实现了简单的stream流操作，下面一起来看下使用效果：<br>和常见的go stream实现最大的区别就是少了很多类型转换。如果结合内置函数，使用上会更方便。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span>  &#123;</span><br><span class="line">	nums := []<span class="keyword">int</span>&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>&#125;</span><br><span class="line"></span><br><span class="line">	stream := Of(nums) <span class="comment">// 创建stream流</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//MapReduce，将nums每个元素迭代再依次叠加</span></span><br><span class="line">	result := Reduce(</span><br><span class="line">		Map(stream, <span class="function"><span class="keyword">func</span><span class="params">(t <span class="keyword">int</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">		<span class="keyword">return</span> t*t</span><br><span class="line">	&#125;), <span class="function"><span class="keyword">func</span><span class="params">(t <span class="keyword">int</span>, r <span class="keyword">int</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">		fmt.Println(t, r)</span><br><span class="line">		<span class="keyword">return</span> t+r</span><br><span class="line">	&#125;)</span><br><span class="line">	fmt.Println(<span class="string">&quot;reduce:&quot;</span>, result)</span><br><span class="line"></span><br><span class="line">    <span class="comment">//取偶数</span></span><br><span class="line">	s2 := stream.Filter(<span class="function"><span class="keyword">func</span><span class="params">(val <span class="keyword">int</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">		<span class="keyword">return</span> val % <span class="number">2</span> == <span class="number">0</span></span><br><span class="line">	&#125;)</span><br><span class="line"></span><br><span class="line">    <span class="comment">//翻倍再转string，再遍历</span></span><br><span class="line">	Map(s2, <span class="function"><span class="keyword">func</span><span class="params">(val <span class="keyword">int</span>)</span> <span class="title">string</span></span> &#123;</span><br><span class="line">		<span class="keyword">return</span> strconv.Itoa(val *<span class="number">2</span>)</span><br><span class="line">	&#125;).ForEach(<span class="function"><span class="keyword">func</span><span class="params">(val <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;val:&quot;</span>, val)</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>上面实现的stream 没有实现并发操作，如果结合<code>goroutine</code>和<code>channel</code>，则可以实现真正的并发流处理。</p>
+<h2 id="0x03-其他"><a href="#0x03-其他" class="headerlink" title="0x03 其他"></a>0x03 其他</h2><h4 id="go除泛型后编译会变慢吗？"><a href="#go除泛型后编译会变慢吗？" class="headerlink" title="go除泛型后编译会变慢吗？"></a>go除泛型后编译会变慢吗？</h4><p>go 1.18预计会比go 1.18慢15~18%，详细见 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzUxMDI4MDc1NA==&mid=2247493136&idx=1&sn=c0fe1ab60d2e890f3cda2e52b4a67a6e&chksm=f907f34dce707a5be810f7b77eec48efb23809615bacefcec9abf61b161d5df1e8b87d813120&scene=178&cur_album_id=1615466880004046849#rd">Go1.18编译慢了近20%?</a></p>
+<h4 id="和java语言比较有什么区别"><a href="#和java语言比较有什么区别" class="headerlink" title="和java语言比较有什么区别?"></a>和java语言比较有什么区别?</h4><p>java通过类型通配符<code>(List&lt;? extends Number&gt;, List&lt;? super Number&gt;)</code>实现协变和逆变，go里没有类似的概念。<br>另外java泛型实现时做了类型擦除，go的类型设计则没有，所有元数据都可以保留在编译类型信息里。</p>
+<h4 id="Go泛型有哪些限制"><a href="#Go泛型有哪些限制" class="headerlink" title="Go泛型有哪些限制?"></a>Go泛型有哪些限制?</h4><p>Go 编译器目前无法处理泛型函数或方法中的类型声明。<br>预计在 Go 1.19 中提供对此功能的支持(<a target="_blank" rel="noopener" href="https://github.com/golang/go/blame/master/doc/go1.18.html">详细参考</a>)</p>
+<p>例如上面<code>stream</code>的例子中, <code>map</code>和<code>reduce</code>的实现，并没有用struct方法的形式来实现，就是这个原因：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Stream[T])</span> <span class="title">Filter</span>[<span class="title">R</span> <span class="title">any</span>]<span class="params">(predicate <span class="keyword">func</span>(T)</span> <span class="title">R</span>) *<span class="title">Stream</span>[<span class="title">T</span>]</span>  &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> predicate <span class="function"><span class="keyword">func</span>[<span class="title">T</span>, <span class="title">R</span> <span class="title">any</span>]<span class="params">(T)</span> <span class="title">R</span></span></span><br></pre></td></tr></table></figure>
+<p>上面的方法会编译失败:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./stream.go: methods cannot have <span class="built_in">type</span> parameters</span><br><span class="line">./stream.go: syntax error: <span class="keyword">function</span> <span class="built_in">type</span> cannot have <span class="built_in">type</span> parameters</span><br></pre></td></tr></table></figure>
+
+
+<h4 id="怎样了解泛型最新的进展？"><a href="#怎样了解泛型最新的进展？" class="headerlink" title="怎样了解泛型最新的进展？"></a>怎样了解泛型最新的进展？</h4><p>可以去go github里的讨论区或者issue里找有关泛型的已通过的提案或者讨论。例如 <a target="_blank" rel="noopener" href="https://github.com/golang/go/issues?q=is:open+is:issue+label:generics+label:Proposal-Accepted">https://github.com/golang/go/issues?q=is%3Aopen+is%3Aissue+label%3Agenerics+label%3AProposal-Accepted</a></p>
+<h2 id="0xff-参考"><a href="#0xff-参考" class="headerlink" title="0xff 参考"></a>0xff 参考</h2><blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md">go type parameters proposal</a><br><a target="_blank" rel="noopener" href="https://colobu.com/2020/06/17/type-parameters-in-go-generic/">go泛型新方案-鸟窝</a><br><a target="_blank" rel="noopener" href="https://go.dev/blog/generics-next-step">generics-next-step</a><br><a target="_blank" rel="noopener" href="https://go.dev/blog/why-generics">why generics</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/go/" rel="tag"># go</a>
+              <a href="/tags/generics/" rel="tag"># generics</a>
+              <a href="/tags/%E6%B3%9B%E5%9E%8B/" rel="tag"># 泛型</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202109/nginx-config/" rel="prev" title="Nginx速查手册">
+      <i class="fa fa-chevron-left"></i> Nginx速查手册
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x00-%E5%89%8D%E8%A8%80"><span class="nav-text">0x00 前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01-%E6%B3%9B%E5%9E%8B"><span class="nav-text">0x01 泛型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%A7%84%E5%88%99"><span class="nav-text">1.规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%8C%85%E5%8F%98%E5%8A%A8"><span class="nav-text">2.包变动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%BD%BF%E7%94%A8"><span class="nav-text">3.使用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02-%E5%AE%9E%E8%B7%B5"><span class="nav-text">0x02 实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8"><span class="nav-text">1.双向链表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-maps"><span class="nav-text">2.maps</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-stream"><span class="nav-text">3.stream</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x03-%E5%85%B6%E4%BB%96"><span class="nav-text">0x03 其他</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0xff-%E5%8F%82%E8%80%83"><span class="nav-text">0xff 参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="vlean"
+      src="/imgs/avatar.jpg">
+  <p class="site-author-name" itemprop="name">vlean</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/vlean" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;vlean" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dolinpa@gmail.com" title="E-Mail → mailto:dolinpa@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">豫ICP备13013580号-2 </a>
+      <img src="/imgs/beian.png" style="display: inline-block;">
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-dragon"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">vlean</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '957f3e366750b08899b8',
+      clientSecret: 'a617c1b674f4ca1c20936b21c2beebfa06b5b10a',
+      repo        : 'vlean.github.io',
+      owner       : 'vlean',
+      admin       : ['vlean'],
+      id          : '178193a8826f6fd0dc45eeacc0770797',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

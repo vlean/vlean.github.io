@@ -116,7 +116,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">4</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">5</span></a>
 
   </li>
         <li class="menu-item menu-item-about">
@@ -156,6 +156,100 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vlean.xyz/202112/go-generics/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/imgs/avatar.jpg">
+      <meta itemprop="name" content="vlean">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="vlean's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/202112/go-generics/" class="post-title-link" itemprop="url">Go泛型参考</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-12-01 16:02:13 / 修改时间：16:07:07" itemprop="dateCreated datePublished" datetime="2021-12-01T16:02:13+08:00">2021-12-01</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h2><p>泛型已经确定将在go 1.18里发布，预计到22年2月份就可以使用到release版本的go泛型了。虽然官方并不建议大家在第一时间去把内部组件升级到泛型版本，但是提前了解下泛型对我们使用上有什么影响还是很有必要的。<br>个人认为Go泛型是go在1.11支持go mod之后对语言层面最大的一次变动。早在go 1.17时，在master分支里就能看到go泛型的身影，只是默认不开启，即cmd/compile 的 -G flag 默认值为 0。</p>
+<h2 id="0x01-泛型"><a href="#0x01-泛型" class="headerlink" title="0x01 泛型"></a>0x01 泛型</h2><h3 id="1-规则"><a href="#1-规则" class="headerlink" title="1.规则"></a>1.规则</h3><p>下面看一组基本概念，go泛型实现规则：</p>
+<ul>
+<li>函数使用方括号，接收类型参数列表，形式如 <code>func F[T any](p T) &#123;...&#125;</code><ul>
+<li>可以定义每个类型参数的约束 <code>func F[T Constraint] (p T)&#123;...&#125;</code></li>
+</ul>
+</li>
+<li>类型参数可以被常规参数和函数体使用</li>
+<li>可以定义类型参数列表，形式如<code>type M[T any] []T</code></li>
+<li>类型约束是接口类型</li>
+<li><code>any</code>为允许任何类型的类型约束</li>
+<li>类型限制<ul>
+<li>任意类型：<code>T</code>限制为该类型</li>
+<li>近似类型：<code>~T</code>限制为基础类型为<code>T</code>，如<code>~int</code>对<code>type Enum int</code>也生效</li>
+<li>union类型：<code>T1 | T2 | ....</code>限制为任意列出的类型</li>
+</ul>
+</li>
+<li>泛型函数只能使用所有类型约束允许的操作</li>
+<li>使用泛型函数或类型需要传递类型参数</li>
+<li>类型推断允许在常见情况下省略函数调用的类型参数</li>
+</ul>
+<p>如果你使用过其他的泛型语言，从上面可以看到go不支持的特性：</p>
+<ul>
+<li>没有协变和逆变，简化了泛型概念</li>
+<li>没有元编程支持，反射包不会改变</li>
+<li>只通过接口类型约束类型参数的行为</li>
+<li>缺少操作符支持</li>
+<li>没有可变类型参数支持</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/202112/go-generics/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://www.vlean.xyz/202109/nginx-config/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -179,10 +273,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-09-28 14:53:40 / 修改时间：19:09:55" itemprop="dateCreated datePublished" datetime="2021-09-28T14:53:40+08:00">2021-09-28</time>
+              <time title="创建时间：2021-09-28 14:53:40" itemprop="dateCreated datePublished" datetime="2021-09-28T14:53:40+08:00">2021-09-28</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-12-01 16:07:07" itemprop="dateModified" datetime="2021-12-01T16:07:07+08:00">2021-12-01</time>
+              </span>
 
           
 
@@ -311,7 +411,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-09-28 19:09:55" itemprop="dateModified" datetime="2021-09-28T19:09:55+08:00">2021-09-28</time>
+                <time title="修改时间：2021-12-01 16:07:07" itemprop="dateModified" datetime="2021-12-01T16:07:07+08:00">2021-12-01</time>
               </span>
 
           
@@ -390,7 +490,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-09-28 19:09:55" itemprop="dateModified" datetime="2021-09-28T19:09:55+08:00">2021-09-28</time>
+                <time title="修改时间：2021-12-01 16:07:07" itemprop="dateModified" datetime="2021-12-01T16:07:07+08:00">2021-12-01</time>
               </span>
 
           
@@ -469,7 +569,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-09-28 19:09:55" itemprop="dateModified" datetime="2021-09-28T19:09:55+08:00">2021-09-28</time>
+                <time title="修改时间：2021-12-01 16:07:07" itemprop="dateModified" datetime="2021-12-01T16:07:07+08:00">2021-12-01</time>
               </span>
 
           
@@ -577,13 +677,13 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-count">5</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
