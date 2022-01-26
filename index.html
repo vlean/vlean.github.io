@@ -116,7 +116,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">5</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">6</span></a>
 
   </li>
         <li class="menu-item menu-item-about">
@@ -156,6 +156,99 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vlean.xyz/202201/vue3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/imgs/avatar.jpg">
+      <meta itemprop="name" content="vlean">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="vlean's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/202201/vue3/" class="post-title-link" itemprop="url">vue3思维导图</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-01-26 19:21:55 / 修改时间：19:56:10" itemprop="dateCreated datePublished" datetime="2022-01-26T19:21:55+08:00">2022-01-26</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <ul>
+<li>应用<code>Vue.createApp</code><ul>
+<li>完整api参考<a target="_blank" rel="noopener" href="https://v3.cn.vuejs.org/api/application-api.html">应用 API</a></li>
+<li>Data<ul>
+<li>函数，创建新组件时调用，返回对象</li>
+<li>实例<code>property</code>仅在首次创建时添加</li>
+<li>有必要使用<code>null</code>、<code>undefined</code>占位</li>
+</ul>
+</li>
+<li>props<ul>
+<li>从父组件接收数组或对象</li>
+</ul>
+</li>
+<li>computed<ul>
+<li>计算属性，所有复杂计算应使用，数据变更响应渲染</li>
+<li><code>&lt;span&gt;&#123;&#123;hasMessage&#125;&#125;&lt;/span&gt;</code>，方法则是<code>&#123;&#123;hasMessage()&#125;&#125;</code></li>
+<li>结果一致，但<code>computed</code>基于响应依赖关系缓存，<code>methods</code>每次都会渲染</li>
+</ul>
+</li>
+<li>watch<ul>
+<li>侦听器，开销大，异步使用</li>
+</ul>
+</li>
+<li><code>:class</code> <code>:style</code>增强<ul>
+<li>数组<code>:class=[att1 att2]</code></li>
+<li>对象，按值结果<code>:class=&#123;active: isActive, error: hasError&#125;</code></li>
+<li>混合 <code>:class=[&#123;active: isActive&#125;, att1]</code></li>
+<li>继承父节点<code>:class=&quot;$attrs.class&quot;</code>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/202201/vue3/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://www.vlean.xyz/202112/go-generics/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -179,10 +272,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-12-01 16:02:13 / 修改时间：16:18:08" itemprop="dateCreated datePublished" datetime="2021-12-01T16:02:13+08:00">2021-12-01</time>
+              <time title="创建时间：2021-12-01 16:02:13" itemprop="dateCreated datePublished" datetime="2021-12-01T16:02:13+08:00">2021-12-01</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-01-26 19:56:10" itemprop="dateModified" datetime="2022-01-26T19:56:10+08:00">2022-01-26</time>
+              </span>
 
           
 
@@ -281,7 +380,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-01 16:18:08" itemprop="dateModified" datetime="2021-12-01T16:18:08+08:00">2021-12-01</time>
+                <time title="修改时间：2022-01-26 19:56:10" itemprop="dateModified" datetime="2022-01-26T19:56:10+08:00">2022-01-26</time>
               </span>
 
           
@@ -411,7 +510,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-01 16:18:08" itemprop="dateModified" datetime="2021-12-01T16:18:08+08:00">2021-12-01</time>
+                <time title="修改时间：2022-01-26 19:56:10" itemprop="dateModified" datetime="2022-01-26T19:56:10+08:00">2022-01-26</time>
               </span>
 
           
@@ -490,7 +589,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-01 16:18:08" itemprop="dateModified" datetime="2021-12-01T16:18:08+08:00">2021-12-01</time>
+                <time title="修改时间：2022-01-26 19:56:10" itemprop="dateModified" datetime="2022-01-26T19:56:10+08:00">2022-01-26</time>
               </span>
 
           
@@ -569,7 +668,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-01 16:18:08" itemprop="dateModified" datetime="2021-12-01T16:18:08+08:00">2021-12-01</time>
+                <time title="修改时间：2022-01-26 19:56:10" itemprop="dateModified" datetime="2022-01-26T19:56:10+08:00">2022-01-26</time>
               </span>
 
           
@@ -677,13 +776,13 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -721,7 +820,7 @@
 <div class="copyright">
   
   &copy; 2016 – 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-dragon"></i>
   </span>

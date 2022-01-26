@@ -20,20 +20,21 @@
     var CONFIG = {"hostname":"www.vlean.xyz","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="2021书 高性能mysql Go 语言设计与实现  极客时间 趣谈网络协议 数据结构和算法之美 从零学习架构  文章">
-<meta property="og:type" content="website">
-<meta property="og:title" content="读书计划">
-<meta property="og:url" content="https://www.vlean.xyz/reader/index.html">
+  <meta name="description" content="应用Vue.createApp 完整api参考应用 API Data 函数，创建新组件时调用，返回对象 实例property仅在首次创建时添加 有必要使用null、undefined占位   props 从父组件接收数组或对象   computed 计算属性，所有复杂计算应使用，数据变更响应渲染 &lt;span&gt;&amp;#123;&amp;#123;hasMessage&amp;#125;&amp;#125;&lt;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="vue3思维导图">
+<meta property="og:url" content="https://www.vlean.xyz/202201/vue3/index.html">
 <meta property="og:site_name" content="vlean&#39;s blog">
-<meta property="og:description" content="2021书 高性能mysql Go 语言设计与实现  极客时间 趣谈网络协议 数据结构和算法之美 从零学习架构  文章">
+<meta property="og:description" content="应用Vue.createApp 完整api参考应用 API Data 函数，创建新组件时调用，返回对象 实例property仅在首次创建时添加 有必要使用null、undefined占位   props 从父组件接收数组或对象   computed 计算属性，所有复杂计算应使用，数据变更响应渲染 &lt;span&gt;&amp;#123;&amp;#123;hasMessage&amp;#125;&amp;#125;&lt;">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2021-08-31T02:31:58.000Z">
+<meta property="article:published_time" content="2022-01-26T11:21:55.000Z">
 <meta property="article:modified_time" content="2022-01-26T11:56:10.188Z">
 <meta property="article:author" content="vlean">
-<meta property="article:tag" content="golang,it,vlean">
+<meta property="article:tag" content="vue3">
+<meta property="article:tag" content="学习笔记">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://www.vlean.xyz/reader/">
+<link rel="canonical" href="https://www.vlean.xyz/202201/vue3/">
 
 
 <script id="page-configurations">
@@ -41,13 +42,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>读书计划 | vlean's blog
-</title>
+  <title>vue3思维导图 | vlean's blog</title>
   
 
 
@@ -154,52 +154,237 @@
       <div class="main-inner">
         <div class="content-wrap">
           
-  
-  
 
-          <div class="content page posts-expand">
+          <div class="content post posts-expand">
             
 
     
-    
-    
-    <div class="post-block" lang="zh-CN">
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vlean.xyz/202201/vue3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/imgs/avatar.jpg">
+      <meta itemprop="name" content="vlean">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="vlean's blog">
+    </span>
       <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          vue3思维导图
+        </h1>
 
-<h1 class="post-title" itemprop="name headline">读书计划
-</h1>
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
 
-<div class="post-meta">
+              <time title="创建时间：2022-01-26 19:21:55 / 修改时间：19:56:10" itemprop="dateCreated datePublished" datetime="2022-01-26T19:21:55+08:00">2022-01-26</time>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li>应用<code>Vue.createApp</code><ul>
+<li>完整api参考<a target="_blank" rel="noopener" href="https://v3.cn.vuejs.org/api/application-api.html">应用 API</a></li>
+<li>Data<ul>
+<li>函数，创建新组件时调用，返回对象</li>
+<li>实例<code>property</code>仅在首次创建时添加</li>
+<li>有必要使用<code>null</code>、<code>undefined</code>占位</li>
+</ul>
+</li>
+<li>props<ul>
+<li>从父组件接收数组或对象</li>
+</ul>
+</li>
+<li>computed<ul>
+<li>计算属性，所有复杂计算应使用，数据变更响应渲染</li>
+<li><code>&lt;span&gt;&#123;&#123;hasMessage&#125;&#125;&lt;/span&gt;</code>，方法则是<code>&#123;&#123;hasMessage()&#125;&#125;</code></li>
+<li>结果一致，但<code>computed</code>基于响应依赖关系缓存，<code>methods</code>每次都会渲染</li>
+</ul>
+</li>
+<li>watch<ul>
+<li>侦听器，开销大，异步使用</li>
+</ul>
+</li>
+<li><code>:class</code> <code>:style</code>增强<ul>
+<li>数组<code>:class=[att1 att2]</code></li>
+<li>对象，按值结果<code>:class=&#123;active: isActive, error: hasError&#125;</code></li>
+<li>混合 <code>:class=[&#123;active: isActive&#125;, att1]</code></li>
+<li>继承父节点<code>:class=&quot;$attrs.class&quot;</code><span id="more"></span></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>指令<ul>
+<li><code>v-</code>开头的特殊属性</li>
+<li>属性预期值是单个js表达式(<code>v-for</code>、<code>v-on</code>除外)</li>
+<li>条件渲染<ul>
+<li><code>v-if</code> <code>v-else</code> <code>v-else-if</code><ul>
+<li><code>v-if</code>比<code>v-for</code>优先级高</li>
+</ul>
+</li>
+<li><code>v-show</code>，控制<code>display</code>属性</li>
+</ul>
+</li>
+<li>列表渲染<ul>
+<li><code>v-for</code><ul>
+<li><code>v-for:&quot;i in [1,2,3]&quot;</code></li>
+<li><code>v-for:&quot;(item, index) in [&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]&quot;</code></li>
+<li><code>v-for:&quot;(value, name, index) in &#123;&#39;v1&#39;:&#39;n1&#39;&#125;&quot;</code></li>
+<li>整数<code>v-for:&quot;n in 10&quot;</code></li>
+<li>通过<code>:key=</code>来给元素定位</li>
+<li>组件<code>&lt;cmp v-for=&quot;item in items&quot; :item=&quot;item&quot;/&gt;</code>，必须绑定属性才会传递给引用组件内</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>v-on</code> <code>@</code> 事件处理<ul>
+<li>事件<code>@click=&quot;counter+=1&quot;</code></li>
+<li>多事件 <code>@click=&quot;one($event), two($event)&quot;</code></li>
+<li>修饰符<code>@click.stop=&quot;doThis&quot;</code> <code>@click.stop.prevent</code><ul>
+<li><code>stop</code> <code>prevent</code> <code>capture</code> <code>self</code> <code>once</code> <code>passive</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>v-model</code>表单输入绑定<ul>
+<li>语法糖，针对不同表单，监听不同事件</li>
+</ul>
+</li>
+<li><code>v-once</code>渲染一次</li>
+</ul>
+</li>
+<li>三种语法<ul>
+<li>完整 <code>v-on:click=&quot;method&quot;</code></li>
+<li>缩写<code>@click=&quot;method&quot;</code></li>
+<li>动态参数<code>@[event]=&quot;method&quot;</code></li>
+</ul>
+</li>
+<li>缩写<ul>
+<li><code>v-bind</code> =<code>:</code></li>
+<li><code>v-on</code> = <code>@</code></li>
+<li><code>v-slot</code>=<code>#</code></li>
+</ul>
+</li>
+<li>大小写不敏感<ul>
+<li><code>camelCase</code></li>
+<li><code>kebab-case</code></li>
+<li>字符串模板不适用</li>
+</ul>
+</li>
+<li>组件<ul>
+<li>带<code>name</code>的可复用实例</li>
+<li><code>props</code>传递数据<ul>
+<li><code>props:[&#39;p1&#39;, &#39;p2&#39;]</code></li>
+<li><code>props:&#123;&#39;title&#39;:String&#125;</code></li>
+<li>数据单向向下流动</li>
+<li>验证<ul>
+<li>类型<code>String</code> <code>[String, Number]</code></li>
+<li><code>p:&#123;required: true&#125;</code> <code>p:&#123;default: 100&#125;</code> <code>p:&#123;validator(v) &#123;&#125;&#125;</code></li>
+</ul>
+</li>
+<li>非<code>props</code> 属性访问<ul>
+<li><code>class</code> <code>style</code> <code>id</code>等attr可通过<code>$attrs</code>继承访问</li>
+<li>通过<code>inheritAttrs: false</code>禁止继承</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>自定义事件<code>@click=&quot;$emit(&#39;enlargeText&#39;)&quot;</code> <code>@click=&quot;enlargeText&quot;</code></li>
+<li>占位 <code>&lt;slot&gt;&lt;/slot&gt;</code><ul>
+<li>默认<code>name=&quot;default&quot;</code>，不包含内容时使用<code>slot</code>包裹的内容</li>
+<li>通过插槽属性传递数据</li>
+<li>定义<code>&lt;slot :item=&quot;item&quot;&gt;&lt;/slot&gt;</code></li>
+<li>访问<code>&lt;template v-slot=&quot;slotName&quot;&gt; &#123;&#123;slotName.item&#125;&#125;&lt;/template&gt;</code></li>
+<li>解构访问<code>&lt;template v-slot=&quot;&#123;item&#125;&quot;&gt;...&lt;/template&gt;</code></li>
+</ul>
+</li>
+<li><code>provide</code>/<code>inject</code><ul>
+<li>提供深层数据传递，默认不是响应式</li>
+<li><code>provide:&#123;data:111&#125;</code>  <code>inject:[&#39;data&#39;]</code></li>
+<li><code>provide() &#123; return &#123;&#125;&#125;</code></li>
+<li>响应式<code>provide() &#123; return &#123;length: Vue.computed(()=&gt;this.data.length)&#125;&#125;</code></li>
+</ul>
+</li>
+<li>动态组件<ul>
+<li> <code>is</code> 属性实现</li>
+<li><code>keep-alive</code>失活组件缓存</li>
+<li>异步组件`defineAsyncComponent(()=&gt; new Promise((resolve, reject)=&gt; {}))</li>
+</ul>
+</li>
+<li>模板引用<code>ref</code><ul>
+<li><code>&lt;input ref=&quot;input&quot;/&gt;</code></li>
+<li><code>this.$refs.input.focus()</code></li>
+</ul>
+</li>
+<li>组件组合<ul>
+<li><code>setup(props,context)</code>在组件创建之前执行<ul>
+<li><code>ref(val)</code>值封装为引用  <code>const counter = ref(0)</code></li>
+<li><code>toRefs(props)</code>跟踪<code>props</code>中变化</li>
+<li>生命周期<code>onMounted</code></li>
+<li>侦听器<code>watch</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/vue3/" rel="tag"># vue3</a>
+              <a href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="tag"># 学习笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202112/go-generics/" rel="prev" title="Go泛型参考">
+      <i class="fa fa-chevron-left"></i> Go泛型参考
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
   
 
-</div>
-
-</header>
-
-      
-      
-      
-      <div class="post-body">
-          <h1 id="2021"><a href="#2021" class="headerlink" title="2021"></a>2021</h1><h2 id="书"><a href="#书" class="headerlink" title="书"></a>书</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://book.douban.com/subject/23008813/">高性能mysql</a></li>
-<li><a target="_blank" rel="noopener" href="https://draveness.me/golang/docs/part1-prerequisite/ch01-prepare/golang-debug/">Go 语言设计与实现</a></li>
-</ul>
-<h2 id="极客时间"><a href="#极客时间" class="headerlink" title="极客时间"></a>极客时间</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://time.geekbang.org/column/intro/85">趣谈网络协议</a></li>
-<li><a target="_blank" rel="noopener" href="https://time.geekbang.org/column/intro/126">数据结构和算法之美</a></li>
-<li><a target="_blank" rel="noopener" href="https://time.geekbang.org/column/intro/81">从零学习架构</a></li>
-</ul>
-<h2 id="文章"><a href="#文章" class="headerlink" title="文章"></a>文章</h2>
-      </div>
-      
-      
-      
-    </div>
-    
-
-    
-    
-    
 
 
           </div>
@@ -251,7 +436,6 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#2021"><span class="nav-text">2021</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B9%A6"><span class="nav-text">书</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%81%E5%AE%A2%E6%97%B6%E9%97%B4"><span class="nav-text">极客时间</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E7%AB%A0"><span class="nav-text">文章</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -402,7 +586,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'vlean.github.io',
       owner       : 'vlean',
       admin       : ['vlean'],
-      id          : 'f5f300a6c16678000e5e8c05185610a8',
+      id          : '17d9f94edb11ebc9ab73f7988ed4d09b',
         language: 'zh-CN',
       distractionFreeMode: true
     });
